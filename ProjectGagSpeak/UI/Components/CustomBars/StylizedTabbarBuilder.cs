@@ -1,5 +1,5 @@
 namespace GagSpeak.Gui.Components;
-
+#pragma warning disable Luna02
 public sealed class StylizedTabbarBuilder<ITab> where ITab : struct, Enum
 {
     private readonly List<StylizedTabbar<ITab>.StylizedTab> _tabs = [];
@@ -30,3 +30,4 @@ public sealed class StylizedTabbarBuilder<ITab> where ITab : struct, Enum
             throw new InvalidOperationException($"Tab mismatch. Missing: {string.Join(", ", enumValues.Except(defined))}");
     }
 }
+#pragma warning restore Luna02

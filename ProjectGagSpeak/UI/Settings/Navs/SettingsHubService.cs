@@ -10,6 +10,7 @@ using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.WebAPI;
+using ImSharp;
 
 namespace GagSpeak.Gui.Settings;
 
@@ -36,7 +37,7 @@ public partial class SettingsHubService
     private readonly StylizedTabbar<HubSettingsTabs> _tabs;
     private string _customServerName = string.Empty;
     private string _customServerUri = string.Empty;
-    private string? _timespanStrCache = null;
+
     public SettingsHubService(ILogger<SettingsHubService> logger,
         GagspeakMediator mediator, MainHub hub, MainConfig mainConfig, 
         ConnectionsConfig connections, AccountManager account, KinkPlateService profiles)
@@ -59,7 +60,7 @@ public partial class SettingsHubService
     public int NavbarIdx => (int)_tabs.TabSelection;
     public void SetNavbarIdx(int idx)
     {
-        if (idx < 0 || idx >= Enum.GetValues<HubSettingsTabs>().Length)
+        if (idx < 0 || idx >= HubSettingsTabs.Values.Count)
             return;
         _tabs.TabSelection = (HubSettingsTabs)idx;
     }
@@ -69,7 +70,7 @@ public partial class SettingsHubService
     public void Draw(ImGuiWindowPtr winPtr)
     {
         // Draw out the tabs using the custom backgrounds and whatever else.
-        _tabs.DrawTabs(TabBarFlags.MinimalGlow);
+        _tabs.DrawTabs(GsTabBarFlags.MinimalGlow);
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() - 2f * ImGuiHelpers.GlobalScale);
         ImGui.Separator();
         ImGui.Spacing();

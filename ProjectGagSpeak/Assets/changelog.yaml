@@ -3,6 +3,94 @@ tagline: "GagSpeak 2.2 - The Chat Update"
 subline: "150+ new emotes, GIF Support, stickers, vanity names, name colors, and more."
 changelog:
 
+  - version: v2.2.3.0
+    date: "October 11th, 2026"
+    title: "Toybox Fixes, HC Escape V2, QoL, and further Cleanup"
+    headerMessage: ""
+    segments:
+      - icon: "BoxOpen"
+        title: "Toybox Update"
+        accent: "Blue"
+        bullets:
+          - text: "Toybox and personal remote now work."
+            contributor: "AzureRavie"
+          - text: "Patterns work correctly and can be started and stopped as expected."
+            contributor: "AzureRavie"
+          - text: "PiShock api updated to newer api endpoints allowing for less breakage later."
+            contributor: "AzureRavie"
+          - text: "Achievements hooked up for both toybox and pishock."
+            contributor: "AzureRavie"
+          - text: "PiShock now has per-pair limiters for additional controls."
+            contributor: "AzureRavie"
+
+      - icon: "Handcuffs"
+        title: "Hardcore Escape v2"
+        accent: "Gold"
+        bullets:
+          - text: "Escape is progress-based instead of a pure random chance of success."
+            contributor: "Yfthbr, AzureRavie, NBS"
+          - text: "Shows progress on item tooltips."
+            contributor: "Yfthbr, AzureRavie, NBS"
+          - text: "Adds default tightness setting for all items with HC traits."
+            contributor: "Yfthbr, AzureRavie, NBS"
+          - text: "Struggling progress based on item tightness and active traits."
+            contributor: "Yfthbr, AzureRavie, NBS"
+          - text: "Rolling poorly can reverse progress, but guarantees progress over long term."
+            contributor: "Yfthbr, AzureRavie, NBS"
+
+      - icon: "Wrench"
+        title: "Adjustments"
+        accent: "Teal"
+        bullets:
+          - text: "The user will be able to enable layers but if the HC struggle mini-game would be invoked, it disables the ability to remove any that are already active."
+            isImportant: true
+            contributor: "AzureRavie, Yfthbr"
+          - text: "Blindfolds from restrictions and cursed loot now apply over restraint set blindfolds."
+            contributor: "AzureRavie"
+
+
+      - icon: "Cog"
+        title: "Quality of Life / Improvements"
+        accent: "Pink"
+        bullets:
+          - text: "Made the saving and loading of config files more resistant to corruption failures."
+            isImportant: true
+            contributor: "AzureRavie"
+          - text: "If a corrupted config is found, we now attempt auto recovery using the backups. the corrupted file will be saved as .corrupted"
+            isImportant: true
+            contributor: "AzureRavie"
+          - text: "Hardcore item removal no longer blocks triggers or self locks with no HC traits enabled"
+            isImportant: true
+            contributor: "AzureRavie, Yfthbr"
+          - text: "Numpad Enter is now able to send messages in global chat"
+            contributor: "AzureRavie"
+          - text: "When emote locked, you can no longer break the emote by drawing your weapon"
+            contributor: "AzureRavie"
+          - text: "Forced follow can no longer be overridden by controller inputs"
+            contributor: "AzureRavie"
+          - text: "Emote lock can no longer be overridden by controller inputs"
+            contributor: "AzureRavie"
+          - text: "Emote lock can no longer be overridden by controller inputs"
+            contributor: "AzureRavie"
+          - text: "Properly update the privacy radar on intervals instead of when pairs updated"
+      
+      - icon: "Bug"
+        title: "Bug Fixes"
+        accent: "Red"
+        bullets:
+          - text: "[Server] Fixes a crash in the wardrobe window when attempting to calculate the highest tightness in layers for hardcore item removal."
+            contributor: "AzureRavie"
+          - text: "Cursed loot that apply overlays actually respect the users settings on server reconnect."
+            contributor: "AzureRavie"
+          - text: "Fixed issue where notifications bell wouldn't go away when checking notifications."
+            contributor: "AzureRavie"
+          - text: "Set player position as the imprisonment position when setting at player location."
+            contributor: "AzureRavie"
+          - text: "Adding checks for locked empty items (Shouldnt happen, but helps account for when it does)"
+            contributor: "AndrielChaoti"
+          - text: "Fixed Puppeteer aliases set to 'Ignore Case' referting to case sensitive after reload."
+            contributor: "AzureRavie"
+
   - version: v2.2.2.0
     date: "September 15th, 2026"
     title: "Settings UI Rework, GlobalChat permissions, and some Fixes"

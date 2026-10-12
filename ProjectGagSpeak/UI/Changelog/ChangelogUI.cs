@@ -22,8 +22,7 @@ public class ChangelogUI : WindowMediatorSubscriberBase
 
     // Log Data
     private ChangelogFile? _changelogFile;
-    private readonly List<string> _supporters = [];
-    private readonly List<string> _contributors = [];
+    private List<string> _contributors = [];
 
     private bool _scrollUp = false;
     private static float _closeWidth = 100f * ImGuiHelpers.GlobalScale;
@@ -115,7 +114,7 @@ public class ChangelogUI : WindowMediatorSubscriberBase
 
         ImGui.SameLine();
 
-        if (CkGui.IconTextButtonCentered(FAI.PeopleGroup, "Contributors", buttonW, true, true))
+        if (CkGui.IconTextButtonCentered(FAI.PeopleGroup, "Contributors", buttonW, true))
             _selectedPage = ChangelogPage.Contributors;
 
         drawPos += new Vector2(0, boxH);
@@ -194,7 +193,23 @@ public class ChangelogUI : WindowMediatorSubscriberBase
 
     private void DrawContributors()
     {
-        ImGui.Text("Nothing here yet!");
+        using var style = ImRaii.PushStyle(ImGuiStyleVar.FrameBorderSize, 1f);
+        var winPtr = ImGuiInternal.GetCurrentWindow();
+        if (winPtr.SkipItems)
+            return;
+
+        if (_changelogFile is null)
+        {
+            CkGui.FontTextCentered("Loading Contributors...", Fonts.SubtitleFont);
+            return;
+        }
+
+        CkGui.InlineSpacingInner();
+        CkGui.FontTextAligned("Project Contributors", Fonts.SubtitleFont);
+        ImGui.Separator();
+
+        foreach (var contributor in _contributors)
+            CkGui.BulletText(contributor);
     }
 
     private void DrawChangelogVersion(ImGuiWindowPtr winPtr, ChangelogVersion logEntry, uint titleColor, bool isFirst)
@@ -241,7 +256,8 @@ public class ChangelogUI : WindowMediatorSubscriberBase
 
         // Simple direct bullets.
         using var _ = ImRaii.PushIndent(10f * ImGuiHelpers.GlobalScale);
-        
+
+        var width = ImGui.GetContentRegionAvail().X;
         if (segment.Bullets.Count > 0)
             foreach (var item in segment.Bullets)
                 BulletText(item);
@@ -264,9 +280,11 @@ public class ChangelogUI : WindowMediatorSubscriberBase
 
         void BulletText(ChangelogBullet bullet)
         {
-            CkGui.BulletText(bullet.Text, 0xFF7FE57F, bullet.IsImportant);
-            if (!string.IsNullOrWhiteSpace(bullet.Contributor))
-                CkGui.ColorTextInline($" - {bullet.Contributor}", GsCol.ShopKeeperColor.Vec4(), false);
+            var hasContributor = !string.IsNullOrWhiteSpace(bullet.Contributor);
+            var bulletWidth = hasContributor ? width - CkGui.ItemSpacing.X - CkGui.FrameHeight - ImGui.CalcTextSize("- " + bullet.Contributor).X : 0;
+            CkGui.BulletText(bullet.Text, 0xFF7FE57F, bullet.IsImportant, bulletWidth);
+            if (hasContributor)
+                CkGui.ColorTextInline($"- {bullet.Contributor}", GsCol.ShopKeeperColor.Vec4(), false);
         }
     }
 
@@ -304,10 +322,14 @@ public class ChangelogUI : WindowMediatorSubscriberBase
             if (_changelogFile is null)
                 return;
 
-            Validate(_changelogFile);
+            var contributors = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            Validate(_changelogFile, contributors);
+
+            // Update the contributors list post-validation
+            _contributors = [.. contributors.OrderBy(c => c)];
         });
 
-        static void Validate(ChangelogFile file)
+        static void Validate(ChangelogFile file, HashSet<string> contributors)
         {
             if (!Enum.IsDefined(file.Icon))
                 throw new InvalidDataException($"Invalid root icon: {file.Icon}");
@@ -322,7 +344,6 @@ public class ChangelogUI : WindowMediatorSubscriberBase
 
                 foreach (var seg in version.Segments)
                 {
-                    // Catch YAML null-overwrites
                     seg.Bullets ??= [];
                     seg.Subsections ??= [];
 
@@ -331,8 +352,20 @@ public class ChangelogUI : WindowMediatorSubscriberBase
                     if (!Enum.IsDefined(seg.Accent))
                         seg.Accent = AccentColor.None;
 
+                    // Collect contributors from segment bullets
+                    foreach (var bullet in seg.Bullets)
+                        if (!string.IsNullOrWhiteSpace(bullet.Contributor))
+                            contributors.Add(bullet.Contributor);
+
+                    // Check sub-sections
                     foreach (var sub in seg.Subsections)
+                    {
                         sub.Bullets ??= [];
+                        // collect contributors
+                        foreach (var bullet in sub.Bullets)
+                            if (!string.IsNullOrWhiteSpace(bullet.Contributor))
+                                contributors.Add(bullet.Contributor);
+                    }
                 }
             }
         }

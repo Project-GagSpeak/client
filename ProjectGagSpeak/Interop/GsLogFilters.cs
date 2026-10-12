@@ -1,4 +1,6 @@
 using System.Runtime.CompilerServices;
+using ImSharp;
+using ImSharp.ImNodes;
 
 namespace GagSpeak;
 
@@ -26,7 +28,7 @@ public static class GsLogFilters
     ];
 
     // One-Time static initialization to determine the maximum value of the LogFilter enum.
-    private static readonly byte _maxValue = (byte)(Enum.GetValues<LogFilter>().Cast<byte>().Max() + 1);
+    private static readonly byte _maxValue = (byte)(LogFilter.Values.Count + 1);
 
     // Array for quick lookup of enabled logs.
     private static readonly bool[] _enabledLogs = InitRecommended();

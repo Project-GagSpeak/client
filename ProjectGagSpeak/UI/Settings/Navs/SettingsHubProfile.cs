@@ -14,6 +14,7 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Hub;
 using GagspeakAPI.User;
+using ImSharp;
 
 namespace GagSpeak.Gui.Settings;
 
@@ -51,7 +52,7 @@ public class SettingsHubProfile
     public int NavbarIdx => (int)_tabs.TabSelection;
     public void SetNavbarIdx(int idx)
     {
-        if (idx < 0 || idx >= Enum.GetValues<HubProfileTabs>().Length)
+        if (idx < 0 || idx >= HubProfileTabs.Values.Count)
             return;
         _tabs.TabSelection = (HubProfileTabs)idx;
     }
@@ -60,7 +61,7 @@ public class SettingsHubProfile
     public void Draw(ImGuiWindowPtr winPtr)
     {
         // Draw out the tabs using the custom backgrounds and whatever else.
-        _tabs.DrawTabs(TabBarFlags.MinimalGlow);
+        _tabs.DrawTabs(GsTabBarFlags.MinimalGlow);
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() - 2f * ImGuiHelpers.GlobalScale);
         ImGui.Separator();
         ImGui.Spacing();

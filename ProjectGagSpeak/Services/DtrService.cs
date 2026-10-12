@@ -33,6 +33,7 @@ public sealed class DtrService : DisposableMediatorSubscriberBase, IHostedServic
     private IDtrBarEntry _notifierEntry;
     private IDtrBarEntry _vibeEntry;
 
+    private DateTime _lastPrivacyCheck = DateTime.MinValue;
     private static HashSet<nint> _nonKinksters = [];
 
     // maybe change up how this is shown, as there are new detailed tooltips and additional click methods for DTR entries.
@@ -53,12 +54,13 @@ public sealed class DtrService : DisposableMediatorSubscriberBase, IHostedServic
         _vibeEntry = CreateVibeDtr();
 
         Mediator.Subscribe<DDSUpdateRequests>(this, _ => UpdateRequests());
-        Mediator.Subscribe<DDSUpdateKinkster>(this, _ => UpdatePrivacy());
         Mediator.Subscribe<WatchedObjectCreated>(this, _ => UpdatePrivacy());
         Mediator.Subscribe<WatchedObjectDestroyed>(this, _ => UpdatePrivacy());
         Mediator.Subscribe<ConnectedMessage>(this, _ => Refresh());
         Mediator.Subscribe<DisconnectedMessage>(this, _ => Refresh());
         Mediator.Subscribe<DTRRefreshMessage>(this, _ => Refresh());
+
+        Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, _ => UpdatePrivacyInterval());
     }
 
     public static IReadOnlySet<nint> NonKinksters => _nonKinksters;
@@ -152,6 +154,17 @@ public sealed class DtrService : DisposableMediatorSubscriberBase, IHostedServic
         }
         _requestsEntry.Text = entryTxt.BuiltString;
         _requestsEntry.Tooltip = tooltip.BuiltString;
+    }
+
+    private void UpdatePrivacyInterval()
+    {
+        var now = DateTime.Now;
+        // If it happened in the last 10s, exit
+        if ((now - _lastPrivacyCheck).TotalSeconds < 10)
+            return;
+
+        _lastPrivacyCheck = now;
+        UpdatePrivacy();
     }
 
     private unsafe void UpdatePrivacy()

@@ -16,6 +16,7 @@ using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagspeakAPI.Chat;
+using ImSharp;
 using OtterGui.Text;
 using System.Windows.Forms;
 
@@ -71,7 +72,7 @@ public class SettingsMainChat
 
     public void SetNavbarIdx(int idx)
     {
-        if (idx < 0 || idx >= Enum.GetValues<ChatTabs>().Length)
+        if (idx < 0 || idx >= ChatTabs.Values.Count)
             return;
         _tabs.TabSelection = (ChatTabs)idx;
     }
@@ -80,7 +81,7 @@ public class SettingsMainChat
     public void Draw(ImGuiWindowPtr winPtr)
     {
         // Draw out the tabs using the custom backgrounds and whatever else.
-        _tabs.DrawTabs(TabBarFlags.MinimalGlow);
+        _tabs.DrawTabs(GsTabBarFlags.MinimalGlow);
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() - 2f * ImGuiHelpers.GlobalScale);
         ImGui.Separator();
         ImGui.Spacing();

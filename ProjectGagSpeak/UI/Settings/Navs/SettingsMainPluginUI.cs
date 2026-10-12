@@ -9,6 +9,7 @@ using GagSpeak.Localization;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
+using ImSharp;
 
 namespace GagSpeak.Gui.Settings;
 
@@ -45,7 +46,7 @@ public class SettingsMainPluginUI
 
     public void SetNavbarIdx(int idx)
     {
-        if (idx < 0 || idx >= Enum.GetValues<PluginUiTabs>().Length)
+        if (idx < 0 || idx >= PluginUiTabs.Values.Count)
             return;
         _tabs.TabSelection = (PluginUiTabs)idx;
     }
@@ -54,7 +55,7 @@ public class SettingsMainPluginUI
     public void Draw(ImGuiWindowPtr winPtr)
     {
         // Draw out the tabs using the custom backgrounds and whatever else.
-        _tabs.DrawTabs(TabBarFlags.MinimalGlow);
+        _tabs.DrawTabs(GsTabBarFlags.MinimalGlow);
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() - 2f * ImGuiHelpers.GlobalScale);
         ImGui.Separator();
         ImGui.Spacing();

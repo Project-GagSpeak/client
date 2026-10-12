@@ -197,13 +197,13 @@ public class ToysPanel
     {
         using var col = ImRaii.PushColor(ImGuiCol.FrameBg, CkCol.CurvedHeaderFade.Uint());
 
-        using (CkRaii.Group(CkCol.CurvedHeaderFade.Uint()))
+        ImGui.Spacing();
+        var isInteractable = device.Interactable;
+        if (ImGui.Checkbox("Interactable", ref isInteractable))
         {
-            CkGui.BoolIcon(_selector.Selected!.Interactable, false);
-            CkGui.TextFrameAlignedInline($"Interactable  ");
+            if (isEditorItem) device.Interactable = isInteractable;
+            else _manager.ToggleInteractableState(device);
         }
-        if (ImGui.IsItemHovered() && ImGui.IsItemClicked())
-            _manager.ToggleInteractableState(_selector.Selected);
         
         ImGui.Spacing();
         DrawFactoryName(device, isEditorItem);

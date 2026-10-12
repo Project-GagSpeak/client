@@ -1,4 +1,5 @@
 using CkCommons;
+using CkCommons.Audio;
 using CkCommons.GarblerCore;
 using CkCommons.HybridSaver;
 using FFXIVClientStructs.FFXIV.Client.UI;
@@ -93,10 +94,8 @@ public class MainConfigData : IAudioConfigData
     public bool RemoveRestraintOnTimerExpire { get; set; } = false; // Auto-Remove restraint when timer falloff occurs.
 
     // GLOBAL TOYBOX SETTINGS
-    // public OutputType AudioOutputType { get; set; } = OutputType.DirectSound; // Best for FFXIV.
-    public Guid DirectOutDevice { get; set; } = Guid.Empty;
-    public string AsioDevice { get; set; } = "";
-    public string WasapiDevice { get; set; } = "";
+    public OutputType AudioOutputType { get; set; } = OutputType.DirectSound; // Best for FFXIV.
+    public string AudioOutputDevice { get; set; } = string.Empty;
 
     // The name displayed when entering a vibe lobby and chatting in it. Should not be changed while in a room.
     public string NicknameInVibeRooms { get; set; } = "Anon. Kinkster";

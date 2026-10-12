@@ -1,3 +1,4 @@
+using CkCommons.Audio;
 using CkCommons.Gui;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
@@ -11,6 +12,7 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Permissions;
+using ImSharp;
 using OtterGui.Text;
 
 namespace GagSpeak.Gui.Settings;
@@ -49,7 +51,7 @@ public class SettingsModulesToybox
 
     public void SetNavbarIdx(int idx)
     {
-        if (idx < 0 || idx >= Enum.GetValues<PluginUiTabs>().Length)
+        if (idx < 0 || idx >= PluginUiTabs.Values.Count)
             return;
         _tabs.TabSelection = (PluginUiTabs)idx;
     }
@@ -58,7 +60,7 @@ public class SettingsModulesToybox
     public void Draw(ImGuiWindowPtr winPtr)
     {
         // Draw out the tabs using the custom backgrounds and whatever else.
-        _tabs.DrawTabs(TabBarFlags.MinimalGlow);
+        _tabs.DrawTabs(GsTabBarFlags.MinimalGlow);
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() - 2f * ImGuiHelpers.GlobalScale);
         ImGui.Separator();
         ImGui.Spacing();
@@ -126,6 +128,9 @@ public class SettingsModulesToybox
             }
         }
         CkGui.HelpText(GSLoc.Settings.Options.IntifaceAddressTT);
+
+        // Call our new audio configuration block
+        DrawSimulatedAudioSettings();
     }
 
     private void DrawPiShock()
@@ -201,5 +206,96 @@ public class SettingsModulesToybox
                     break;
                 }
         }
+    }
+
+    private void DrawSimulatedAudioSettings()
+    {
+        CkGui.FontText("Simulated Audio Output", Fonts.HeaderFont);
+        CkGui.ColorText("This is still in development and very buggy, please bear with me.", ImGuiColors.DalamudYellow);
+
+        var currentOutType = _config.Data.AudioOutputType;
+        var currentDeviceId = _config.Data.AudioOutputDevice;
+
+        // 1. Output API Type Selection
+        ImGui.SetNextItemWidth(150 * ImGuiHelpers.GlobalScale);
+        using (var c = ImRaii.Combo("Audio API", currentOutType.ToString()))
+        {
+            if (c)
+            {
+                foreach (OutputType type in Enum.GetValues<OutputType>())
+                {
+                    if (ImGui.Selectable(type.ToString(), type == currentOutType))
+                    {
+                        _config.Data.AudioOutputType = type;
+                        _config.Data.AudioOutputDevice = string.Empty;
+                        _config.Save();
+                        // Immediately apply the new API to the backend
+                        AudioSystem.InitializeOutputDevice(type, string.Empty);
+                    }
+                }
+            }
+        }
+        CkGui.AttachTooltip("The audio interface used to route simulated toy sounds. (DirectSound is safest)");
+
+        var currentDeviceName = GetCurrentDeviceName(currentOutType, currentDeviceId);
+        ImGui.SetNextItemWidth(250 * ImGuiHelpers.GlobalScale);
+        using (var devCombo = ImRaii.Combo("Output Device", currentDeviceName))
+        {
+            if (devCombo)
+                DrawDeviceSelectables(currentOutType, currentDeviceId);
+        }
+        CkGui.AttachTooltip("The physical device (speakers/headphones) to play simulated toy sounds through.");
+
+        ImUtf8.SameLineInner();
+        if (CkGui.IconTextButton(FAI.ArrowsSpin, "Refresh List"))
+        {
+            AudioSystem.FetchLatestAudioDevices();
+            AudioSystem.InitializeOutputDevice(_config.Data.AudioOutputType, _config.Data.AudioOutputDevice);
+        }
+    }
+
+    private void DrawDeviceSelectables(OutputType type, string currentId)
+    {
+        switch (type)
+        {
+            case OutputType.DirectSound:
+                foreach (var (guid, name) in AudioSystem.DirectSoundAudioDevices)
+                    if (ImGui.Selectable(name, guid.ToString() == currentId))
+                        ApplyNewDevice(guid.ToString());
+                break;
+
+            case OutputType.Wasapi:
+                foreach (var (id, name) in AudioSystem.WasapiAudioDevices)
+                    if (ImGui.Selectable(name, id == currentId))
+                        ApplyNewDevice(id);
+                break;
+
+            case OutputType.Asio:
+                foreach (var name in AudioSystem.AsioAudioDevices)
+                    if (ImGui.Selectable(name, name == currentId))
+                        ApplyNewDevice(name);
+                break;
+        }
+    }
+
+    private void ApplyNewDevice(string newDeviceId)
+    {
+        _config.Data.AudioOutputDevice = newDeviceId;
+        _config.Save();
+        AudioSystem.InitializeOutputDevice(_config.Data.AudioOutputType, newDeviceId);
+    }
+
+    private string GetCurrentDeviceName(OutputType type, string id)
+    {
+        if (string.IsNullOrEmpty(id) || id == Guid.Empty.ToString())
+            return "Default";
+
+        return type switch
+        {
+            OutputType.DirectSound => Guid.TryParse(id, out var guid) && AudioSystem.DirectSoundAudioDevices.TryGetValue(guid, out var name) ? name : "Unknown Device",
+            OutputType.Wasapi => AudioSystem.WasapiAudioDevices.TryGetValue(id, out var name) ? name : "Unknown Device",
+            OutputType.Asio => AudioSystem.AsioAudioDevices.Contains(id) ? id : "Unknown Device",
+            _ => "Unknown Device"
+        };
     }
 }

@@ -12,7 +12,7 @@ using GagSpeak.Utils;
 namespace GagSpeak.Gui.Components;
 
 [Flags]
-public enum TabBarFlags
+public enum GsTabBarFlags
 {
     None        = 0 << 0,
     LineGlow    = 1 << 0,
@@ -85,13 +85,13 @@ public class StylizedTabbar<ITab> where ITab : struct, Enum
         => _tabButtons.Add(new StylizedTab(tab, label, icon, col, tooltip));
 
     // Left-Aligned
-    public void DrawTabs(TabBarFlags flags)
+    public void DrawTabs(GsTabBarFlags flags)
         => DrawTabs(null, ImUtf8.FrameHeight, ImGui.GetStyle().FrameRounding, flags);
 
-    public void DrawTabs(float? tabWidth = null, float? height = null, TabBarFlags flags = TabBarFlags.Minimal)
+    public void DrawTabs(float? tabWidth = null, float? height = null, GsTabBarFlags flags = GsTabBarFlags.Minimal)
         => DrawTabs(tabWidth, height ?? ImUtf8.FrameHeight, ImGui.GetStyle().FrameRounding, flags);
 
-    public void DrawTabs(float? tabWidth = null, float? height = null, float? rounding = null, TabBarFlags flags = TabBarFlags.Minimal)
+    public void DrawTabs(float? tabWidth = null, float? height = null, float? rounding = null, GsTabBarFlags flags = GsTabBarFlags.Minimal)
     {
         if (_tabButtons.Count is 0)
             return;
@@ -108,7 +108,7 @@ public class StylizedTabbar<ITab> where ITab : struct, Enum
     }
 
     // Centered.
-    public void DrawCenteredTabs(float? availableWidth = null, float? height = null, float? rounding = null, TabBarFlags flags = TabBarFlags.Minimal)
+    public void DrawCenteredTabs(float? availableWidth = null, float? height = null, float? rounding = null, GsTabBarFlags flags = GsTabBarFlags.Minimal)
     {
         if (_tabButtons.Count is 0)
             return;
@@ -117,7 +117,7 @@ public class StylizedTabbar<ITab> where ITab : struct, Enum
         availableWidth ??= ImGui.GetContentRegionAvail().X;
         height ??= ImUtf8.FrameHeight;
         rounding ??= ImGui.GetStyle().FrameRounding;
-        var spacing = ImUtf8.ItemSpacing.X * (((flags & TabBarFlags.Dividers) != 0) ? 2 : 1);
+        var spacing = ImUtf8.ItemSpacing.X * (((flags & GsTabBarFlags.Dividers) != 0) ? 2 : 1);
 
         using var _ = ImRaii.PushColor(ImGuiCol.Button, 0)
             .Push(ImGuiCol.ButtonHovered, GsCol.HoverOverlay.Uint())
@@ -131,7 +131,7 @@ public class StylizedTabbar<ITab> where ITab : struct, Enum
         DrawTabsInternal(wdl, tabWidth, height.Value, rounding.Value, flags);
     }
 
-    private void DrawTabsInternal(ImDrawListPtr wdl, float? tabWidth, float height, float rounding, TabBarFlags flags)
+    private void DrawTabsInternal(ImDrawListPtr wdl, float? tabWidth, float height, float rounding, GsTabBarFlags flags)
     {
         // Draw out the tabs.
         var selectedIdx = -1;
@@ -147,7 +147,7 @@ public class StylizedTabbar<ITab> where ITab : struct, Enum
             // Shift for same-line draw.
             if (i < _tabButtons.Count - 1)
             {
-                if ((flags & TabBarFlags.Dividers) != 0)
+                if ((flags & GsTabBarFlags.Dividers) != 0)
                 {
                     ImGui.SameLine(0, ImUtf8.ItemSpacing.X * 2);
 
@@ -168,7 +168,7 @@ public class StylizedTabbar<ITab> where ITab : struct, Enum
             return;
 
         // Draw based on style.
-        if (((flags & TabBarFlags.Overlay) != 0))
+        if (((flags & GsTabBarFlags.Overlay) != 0))
             DrawOverlayStyle(wdl, selectedIdx, flags);
         else
             DrawSimpleStyle(wdl, selectedIdx, flags);
@@ -251,7 +251,7 @@ public class StylizedTabbar<ITab> where ITab : struct, Enum
         _overlayCellRect[tab.Tab] = new(min, max);
     }
 
-    private void DrawSimpleStyle(ImDrawListPtr wdl, int selectedIdx, TabBarFlags flags)
+    private void DrawSimpleStyle(ImDrawListPtr wdl, int selectedIdx, GsTabBarFlags flags)
     {
         var curTab = _tabButtons[selectedIdx];
         var curRect = _overlayCellRect[curTab.Tab];
@@ -259,7 +259,7 @@ public class StylizedTabbar<ITab> where ITab : struct, Enum
         var underY = curRect.Max.Y + 2f * ImGuiHelpers.GlobalScale;
         var ulMin = new Vector2(curRect.Min.X + 10f * ImGuiHelpers.GlobalScale, curRect.Max.Y);
         var ulMax = new Vector2(curRect.Max.X - 10f * ImGuiHelpers.GlobalScale, underY);
-        if ((flags & TabBarFlags.LineGlow) != 0)
+        if ((flags & GsTabBarFlags.LineGlow) != 0)
         {
             for (int i = 3; i > 0; i--)
             {
@@ -273,12 +273,12 @@ public class StylizedTabbar<ITab> where ITab : struct, Enum
         wdl.AddRectFilled(ulMin, ulMax, col);
     }
 
-    private void DrawOverlayStyle(ImDrawListPtr wdl, int selectedIdx, TabBarFlags flags)
+    private void DrawOverlayStyle(ImDrawListPtr wdl, int selectedIdx, GsTabBarFlags flags)
     {
         var curTab = _tabButtons[selectedIdx];
         var curRect = _overlayCellRect[curTab.Tab];
         var inTransition = _prevTab is not null;
-        var timeFloat = ((flags & TabBarFlags.Overlay) != 0) ? (float)ImGui.GetTime() : 0f;
+        var timeFloat = ((flags & GsTabBarFlags.Overlay) != 0) ? (float)ImGui.GetTime() : 0f;
 
         // Draw Geometry
         var curSize = curRect.Max - curRect.Min;
@@ -328,7 +328,7 @@ public class StylizedTabbar<ITab> where ITab : struct, Enum
         wdl.AddRectFilled(new Vector2(minX, minY), new Vector2(minX + boxW, minY + ImGuiHelpers.GlobalScale), accentCol);
 
         // Glow radiating from the line.
-        if ((flags & TabBarFlags.LineGlow) != 0)
+        if ((flags & GsTabBarFlags.LineGlow) != 0)
         {
             for (var i = 1; i <= 3; i++)
             {
@@ -355,7 +355,7 @@ public class StylizedTabbar<ITab> where ITab : struct, Enum
                 wdl.AddCircle(ctr, rippleR * 0.72f, ColorHelpers.ApplyOpacity(col, rippleA * 0.55f), 30, 1.0f);
             }
         }
-        else if ((flags & TabBarFlags.PulseColor) != 0)
+        else if ((flags & GsTabBarFlags.PulseColor) != 0)
         {
             var breath = 0.5f + 0.5f * MathF.Sin(timeFloat * MathF.PI * 1.2f);
             var alphaBlend = 0.04f + 0.04f * breath;

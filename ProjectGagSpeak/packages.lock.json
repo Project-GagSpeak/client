@@ -105,6 +105,12 @@
         "resolved": "3.11.0",
         "contentHash": "ZBBJCYhV+likEtHnQJ1HSh6eRLu5DEe/IDvYDmMpr2jbqic50q888HNkJKIiBCfPZWculhZ0vmxaJadnJ2qs7A=="
       },
+      "SixLabors.ImageSharp": {
+        "type": "Direct",
+        "requested": "[3.1.12, )",
+        "resolved": "3.1.12",
+        "contentHash": "iAg6zifihXEFS/t7fiHhZBGAdCp3FavsF4i2ZIDp0JfeYeDVzvmlbY1CNhhIKimaIzrzSi5M/NBFcWvZT2rB/A=="
+      },
       "System.IdentityModel.Tokens.Jwt": {
         "type": "Direct",
         "requested": "[7.5.2, )",
@@ -531,11 +537,6 @@
           "NAudio.Core": "2.2.1"
         }
       },
-      "SixLabors.ImageSharp": {
-        "type": "Transitive",
-        "resolved": "3.1.11",
-        "contentHash": "JfPLyigLthuE50yi6tMt7Amrenr/fA31t2CvJyhy/kQmfulIBAqo5T/YFUSRHtuYPXRSaUHygFeh6Qd933EoSw=="
-      },
       "System.Diagnostics.EventLog": {
         "type": "Transitive",
         "resolved": "8.0.1",
@@ -581,7 +582,8 @@
       "penumbra.api": {
         "type": "Project",
         "dependencies": {
-          "Luna": "[1.0.0, )"
+          "Microsoft.Extensions.Logging": "[9.0.0, )",
+          "System.IO.Hashing": "[9.0.8, )"
         }
       },
       "penumbra.gamedata": {
@@ -590,7 +592,7 @@
           "FlatSharp.Compiler": "[7.9.0, )",
           "FlatSharp.Runtime": "[7.9.0, )",
           "Luna": "[1.0.0, )",
-          "Penumbra.Api": "[5.17.0, )",
+          "Penumbra.Api": "[5.19.2, )",
           "Penumbra.String": "[1.0.8, )"
         }
       },

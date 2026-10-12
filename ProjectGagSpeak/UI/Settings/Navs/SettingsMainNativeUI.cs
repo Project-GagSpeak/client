@@ -15,6 +15,7 @@ using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Hub;
+using ImSharp;
 
 namespace GagSpeak.Gui.Settings;
 
@@ -57,7 +58,7 @@ public class SettingsMainNativeUI
 
     public void SetNavbarIdx(int idx)
     {
-        if (idx < 0 || idx >= Enum.GetValues<NativeUiTabs>().Length)
+        if (idx < 0 || idx >= NativeUiTabs.Values.Count)
             return;
         _tabs.TabSelection = (NativeUiTabs)idx;
     }
@@ -66,7 +67,7 @@ public class SettingsMainNativeUI
     public void Draw(ImGuiWindowPtr winPtr)
     {
         // Draw out the tabs using the custom backgrounds and whatever else.
-        _tabs.DrawTabs(TabBarFlags.MinimalGlow);
+        _tabs.DrawTabs(GsTabBarFlags.MinimalGlow);
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() - 2f * ImGuiHelpers.GlobalScale);
         ImGui.Separator();
         ImGui.Spacing();

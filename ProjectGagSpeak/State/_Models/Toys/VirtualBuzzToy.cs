@@ -1,4 +1,6 @@
+using CkCommons.Audio;
 using GagSpeak.PlayerClient;
+using GagSpeak.Services.Configs;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Network;
@@ -78,12 +80,36 @@ public class VirtualBuzzToy : BuzzToy, IEditableStorageItem<VirtualBuzzToy>
         }
     }
 
-    // private string GetAudioSystemKey(ToyMotor motor, uint motorIdx) => $"{Id}_{motor}_{motorIdx}";
+    private string GetAudioSystemKey(ToyMotor motor, uint motorIdx)
+        => $"{Id}_{motor}_{motorIdx}";
+
+    private void UpdateVibrationAudio(ToyMotor motor, uint motorIdx, double intensity)
+    {
+        var audioKey = GetAudioSystemKey(motor, motorIdx);
+
+        if (intensity > 0)
+        {
+            // Fetch the shared cached sound data
+            var path = Path.Combine(GsFiles.AssemblyDirectory, "Assets", "Audio", "vibrator_loop.wav");
+            var cachedSound = AudioSystem.GetOrAddSound(path);
+            AudioSystem.PlaySound(audioKey, cachedSound, loop: true, initialIntensity: intensity);
+            AudioSystem.SetIntensity(audioKey, intensity);
+        }
+        else
+        {
+            // If intensity hits 0, stop the sound entirely to save processing power
+            AudioSystem.StopSound(audioKey);
+        }
+    }
 
     public override bool VibrateAll(double intensity)
     {
         if (!base.VibrateAll(intensity))
             return false;
+
+        if (_motorTypeMap.TryGetValue(ToyMotor.Vibration, out var motors))
+            foreach (var motor in motors)
+                UpdateVibrationAudio(ToyMotor.Vibration, motor.MotorIdx, intensity);
 
         return false;
     }
@@ -92,6 +118,9 @@ public class VirtualBuzzToy : BuzzToy, IEditableStorageItem<VirtualBuzzToy>
     { 
         if (!base.Vibrate(motorIdx, intensity))
             return false;
+
+        // Send the vibration
+        UpdateVibrationAudio(ToyMotor.Vibration, motorIdx, intensity);
 
         return false;
     }
@@ -204,4 +233,16 @@ public class VirtualBuzzToy : BuzzToy, IEditableStorageItem<VirtualBuzzToy>
         }
         return newToy;
     }
+
+    /// <summary>
+    ///   We must kill all its active audio tracks so they don't buzz indefinitely.
+    /// </summary>
+    public void StopAllAudio()
+    {
+        foreach (var motor in _motorMap.Values)
+            AudioSystem.StopSound(GetAudioSystemKey(motor.Type, motor.MotorIdx));
+    }
+
+    public override void Dispose()
+        => StopAllAudio();
 }

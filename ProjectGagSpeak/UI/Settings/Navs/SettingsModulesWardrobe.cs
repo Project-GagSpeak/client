@@ -14,6 +14,7 @@ using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data.Permissions;
+using ImSharp;
 using OtterGui;
 
 namespace GagSpeak.Gui.Settings;
@@ -58,7 +59,7 @@ public class SettingsModulesWardrobe
 
     public void SetNavbarIdx(int idx)
     {
-        if (idx < 0 || idx >= Enum.GetValues<PluginUiTabs>().Length)
+        if (idx < 0 || idx >= PluginUiTabs.Values.Count)
             return;
         _tabs.TabSelection = (PluginUiTabs)idx;
     }
@@ -67,7 +68,7 @@ public class SettingsModulesWardrobe
     public void Draw(ImGuiWindowPtr winPtr)
     {
         // Draw out the tabs using the custom backgrounds and whatever else.
-        _tabs.DrawTabs(TabBarFlags.MinimalGlow);
+        _tabs.DrawTabs(GsTabBarFlags.MinimalGlow);
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() - 2f * ImGuiHelpers.GlobalScale);
         ImGui.Separator();
         ImGui.Spacing();

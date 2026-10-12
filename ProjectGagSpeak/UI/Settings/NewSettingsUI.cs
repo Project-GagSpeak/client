@@ -13,6 +13,7 @@ using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.Utils;
+using ImSharp;
 using OtterGui.Text;
 using OtterGuiInternal;
 
@@ -112,7 +113,7 @@ public class NewSettingsUI : WindowMediatorSubscriberBase
 
     private void OnOpenSettingsEvent(int navbarIdx, int subnavBarIdx)
     {
-        if (navbarIdx >= Enum.GetValues<SettingsNavOption>().Length)
+        if (navbarIdx >= SettingsNavOption.Values.Count)
             return;
 
         var targetTab = (SettingsNavOption)navbarIdx;
