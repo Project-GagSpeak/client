@@ -254,16 +254,12 @@ public class BuzzToyManager : IDisposable, IHybridSavable
         _logger.LogInformation($"Loading in StoredToys Config for file: {file}");
 
         _storage.Clear();
-        if (!File.Exists(file))
+        if (_saver.Load(this) is not { } jObject)
         {
             _logger.LogWarning($"No StoredToys Config file found at {file}");
             _saver.Save(this);
             return;
         }
-
-        // Read the json from the file.
-        var jsonText = File.ReadAllText(file);
-        var jObject = JObject.Parse(jsonText);
 
         var version = jObject["Version"]?.Value<int>() ?? 0;
 

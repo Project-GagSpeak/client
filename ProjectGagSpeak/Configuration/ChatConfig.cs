@@ -118,15 +118,13 @@ public class ChatConfig : IHybridSavable, IAudioConfig<ChatConfigData>, IDisposa
     {
         var file = _saver.FileNames.ChatConfig;
         _logger.LogInformation($"Loading in Chat Config: {file}");
-        if (!File.Exists(file))
+        if (_saver.Load(this) is not { } jObject)
         {
             _logger.LogWarning($"ChatConfig file not found: {file}");
             _saver.Save(this);
             return;
         }
 
-        var jsonText = File.ReadAllText(file);
-        var jObject = JObject.Parse(jsonText);
         var version = jObject["Version"]?.Value<int>() ?? 0;
 
         // Load instance configuration

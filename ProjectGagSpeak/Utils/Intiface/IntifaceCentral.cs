@@ -27,7 +27,8 @@ public static partial class IntifaceCentral
         }
     }
 
-    public static void OpenIntiface(bool pushToForeground)
+    /// <returns> True if Intiface Central was found running or was launched. </returns>
+    public static bool OpenIntiface(bool pushToForeground, bool openInstallerLink)
     {
         // search for the intiface celtral window
         var windowHandle = FindWindowByRegex(@"Intiface\u00AE Central*");
@@ -40,20 +41,23 @@ public static partial class IntifaceCentral
                 TerraFX.Interop.Windows.Windows.ShowWindow(windowHandle, 0);
                 TerraFX.Interop.Windows.Windows.SetForegroundWindow(windowHandle);
             }
+            return true;
         }
         // otherwise, start the process to open intiface central
         else if (!string.IsNullOrEmpty(AppPath) && File.Exists(AppPath))
         {
             Svc.Logger.Information("Starting Intiface Central");
             Process.Start(AppPath);
+            return true;
         }
         // or just open the installer if it doesnt exist.
-        else
+        else if (openInstallerLink)
         {
             Svc.Logger.Warning("Application not found, redirecting you to download installer.\n" +
                 $"Current App Path is: {AppPath}");
             Util.OpenLink("https://intiface.com/");
         }
+        return false;
     }
 
     [StructLayout(LayoutKind.Sequential)]

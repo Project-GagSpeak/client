@@ -184,7 +184,7 @@ public class FavoritesConfig : IHybridSavable
     {
         var file = _saver.FileNames.Favorites;
         _logger.LogInformation($"Loading FavoritesConfig file: {file}");
-        if (!File.Exists(file))
+        if (_saver.Load(this) is not { } jObject)
         {
             _logger.LogWarning($"FavoritesConfig file not found: {file}");
             _dataByServer.Clear();
@@ -203,7 +203,7 @@ public class FavoritesConfig : IHybridSavable
 
         try
         {
-            var load = JsonConvert.DeserializeObject<LoadIntermediary>(File.ReadAllText(file))
+            var load = jObject.ToObject<LoadIntermediary>()
                 ?? throw new Exception("Failed to deserialize FavoritesConfig");
 
             // Builds up to 2.2.0.4 wrote the v2 format but output as Version 1

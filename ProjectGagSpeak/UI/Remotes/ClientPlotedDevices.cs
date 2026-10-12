@@ -1,3 +1,4 @@
+using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Models;
@@ -11,6 +12,12 @@ public sealed class ClientPlotedDevices : UserPlotedDevices
     // In the below fields, -1 implies that the data is no longer present or running.
     private RemotePlaybackRef _patternInfo = new();
     private RemotePlaybackRef _injectedInfo = new();
+    // Patterns layered over the active pattern. Each motor plays the highest value among the pattern and its layers.
+    private readonly List<PatternLayer> _layers = new();
+    private sealed record PatternLayer(Dictionary<MotorDot, double[]> Data, int Length)
+    {
+        public int Idx { get; set; } = 0;
+    }
 
     public ClientPlotedDevices(ILogger log, GagspeakMediator mediator, RoomParticipantBase user, RemoteAccess access)
         : base(log, mediator, user, access)
@@ -20,6 +27,12 @@ public sealed class ClientPlotedDevices : UserPlotedDevices
     public Guid ActivePattern => _patternInfo.PatternId;
     public bool IsPlayingPattern => _patternInfo.Idx != -1;
     public bool IsPlayingVibeData => _injectedInfo.Idx != -1;
+    /// <summary> If a pattern started by another Kinkster is playing. </summary>
+    public bool IsPlayingForcedPattern => IsPlayingPattern && Access == RemoteAccess.ForcedPlayback;
+    /// <summary> If any motor on the client's devices currently has an intensity above 0. </summary>
+    public bool IsVibrating { get; private set; } = false;
+    // Last time a motor was manually dialed to full intensity.
+    private DateTime _lastMaxIntensity = DateTime.MinValue;
 
     public bool TryUpdateRemoteForRecording()
     {
@@ -87,6 +100,9 @@ public sealed class ClientPlotedDevices : UserPlotedDevices
         if (IsPlayingVibeData)
             OnInjectedPlaybackEnd(enactor);
 
+        lock (_layers)
+            _layers.Clear();
+
         // perform a cleanup on all device dot motor dot data.
         foreach (var device in _devices)
         {
@@ -94,6 +110,8 @@ public sealed class ClientPlotedDevices : UserPlotedDevices
             device.CleanupData();
             Log.LogInformation($"Powered down device {device.FactoryName} for kinkster {Owner.DisplayName}.");
         }
+        IsVibrating = false;
+        Mediator.Publish(new DTRRefreshMessage());
     }
 
     /// <summary>
@@ -104,6 +122,8 @@ public sealed class ClientPlotedDevices : UserPlotedDevices
     public override void OnUpdateTick()
     {
         //Log.LogDebug("Processing Update Tick for UserPlotedDevices.");
+        var manual = !IsPlayingPattern && !IsPlayingVibeData;
+        UpdateLayerIntensities();
         // perform the latest data update based on the current state of the plottedDevices.
         if (IsPlayingPattern)
         {
@@ -143,6 +163,20 @@ public sealed class ClientPlotedDevices : UserPlotedDevices
             // if we are recording data, update the latest positions of all devices.
             foreach (var device in _devices)
                 device.UpdatePosition();
+        }
+
+        if (manual && _devices.Any(d => d.MotorDotMap.Values.Any(m => m.Motor.Intensity >= 1.0)))
+            _lastMaxIntensity = DateTime.UtcNow;
+
+        // Refresh the DTR only when the active motor state flips.
+        var vibrating = _devices.Any(d => d.MotorDotMap.Values.Any(m => m.Motor.Intensity > 0));
+        if (vibrating != IsVibrating)
+        {
+            IsVibrating = vibrating;
+            Mediator.Publish(new DTRRefreshMessage());
+            // Dialed from 100% to 0% in under a second.
+            if (!vibrating && manual && DateTime.UtcNow - _lastMaxIntensity < TimeSpan.FromSeconds(1))
+                (ClientAchievements.SaveData[Achievements.DontKillMyVibe.Id] as ProgressAchievement)?.IncrementProgress();
         }
     }
 
@@ -197,7 +231,7 @@ public sealed class ClientPlotedDevices : UserPlotedDevices
         Access = enactor == MainHub.UID ? RemoteAccess.Playback : RemoteAccess.ForcedPlayback;
         // Server-side, any time an active pattern update is received, it sends that update back to us and all our paired Kinksters.
         // Thus, if only send the update if the call is not self-invoked.
-        if (enactor == MainHub.UID)
+        if (enactor == MainHub.UID && ActivePattern != Guid.Empty)
             Mediator.Publish(new EnabledItemChanged(GSModule.Pattern, ActivePattern, true));
     }
 
@@ -209,12 +243,12 @@ public sealed class ClientPlotedDevices : UserPlotedDevices
 
         Log.LogInformation($"User {enactor} ended currently playing Pattern {ActivePattern} for {Owner.DisplayName}.");
         GagspeakEventManager.AchievementEvent(UnlocksEvent.RemoteAction, RemoteInteraction.PatternPlaybackEnd, ActivePattern, enactor);
-        _patternInfo.Reset();
-        Access = RemoteAccess.Full;
         // Server-side, any time an active pattern update is received, it sends that update back to us and all our paired Kinksters.
         // Thus, if only send the update if the call is not self-invoked.
-        if (enactor == MainHub.UID && callSource is not (RemoteSource.PatternSwitch or RemoteSource.Safeword))
+        if (enactor == MainHub.UID && ActivePattern != Guid.Empty && callSource is not (RemoteSource.PatternSwitch or RemoteSource.Safeword))
             Mediator.Publish(new EnabledItemChanged(GSModule.Pattern, ActivePattern, false));
+        _patternInfo.Reset();
+        Access = RemoteAccess.Full;
 
         // if the call source is not from a power on or down, we must perform cleanup.
         if (callSource is not RemoteSource.PowerOn and not RemoteSource.PowerOff)
@@ -230,6 +264,67 @@ public sealed class ClientPlotedDevices : UserPlotedDevices
         Log.LogInformation($"User {enactor} ended currently playing Vibe Data for {Owner.DisplayName}.");
         GagspeakEventManager.AchievementEvent(UnlocksEvent.RemoteAction, RemoteInteraction.VibeDataStreamEnd, Guid.Empty, enactor);
         _injectedInfo.Reset();
+    }
+
+    /// <summary>
+    ///   Layers a pattern over whatever the remote is currently playing, without interrupting it. <para />
+    ///   Each motor plays the higher intensity of the two until the layer ends.
+    /// </summary>
+    /// <returns> False if the remote is not running, or no devices match the pattern. </returns>
+    public bool TryLayerPattern(Pattern pattern, TimeSpan startPoint, TimeSpan duration)
+    {
+        if (!UserIsBeingBuzzed)
+            return false;
+
+        var startIndex = (int)(startPoint.TotalMilliseconds / 20);
+        var count = (int)(duration.TotalMilliseconds / 20);
+        var data = new Dictionary<MotorDot, double[]>();
+        foreach (var deviceData in pattern.PlaybackData.DeviceData)
+        {
+            if (_devices.FirstOrDefault(cd => cd.FactoryName == deviceData.Toy) is not { } device || !device.ValidForRemote)
+                continue;
+
+            foreach (var motor in deviceData.MotorData)
+                if (device.MotorDotMap.TryGetValue(motor.MotorIdx, out var motorDot))
+                    data[motorDot] = SliceMotorData(motor.Data, startIndex, count).ToArray();
+
+            device.IsEnabled = true;
+        }
+
+        if (data.Count is 0 || count <= 0)
+            return false;
+
+        lock (_layers)
+            _layers.Add(new PatternLayer(data, count));
+        Log.LogInformation($"Layered pattern {pattern.Label} over the active pattern for {duration}.");
+        return true;
+    }
+
+    // Sets every motor's OverlayIntensity to the highest active layer value, then advances the layers.
+    private void UpdateLayerIntensities()
+    {
+        foreach (var motor in _devices.SelectMany(d => d.MotorDotMap.Values))
+            motor.OverlayIntensity = 0.0;
+
+        lock (_layers)
+        {
+            foreach (var layer in _layers)
+            {
+                foreach (var (motor, data) in layer.Data)
+                    motor.OverlayIntensity = Math.Max(motor.OverlayIntensity, Math.Clamp(data[layer.Idx], 0.0, 1.0));
+                layer.Idx++;
+            }
+            _layers.RemoveAll(l => l.Idx >= l.Length);
+        }
+    }
+
+    // Slices a motor's data from the start index for count entries, padding with 0.0 if short.
+    private static List<double> SliceMotorData(IEnumerable<double> data, int startIndex, int count)
+    {
+        var sliced = data.Skip(startIndex).Take(count).ToList();
+        if (sliced.Count < count)
+            sliced.AddRange(Enumerable.Repeat(0.0, count - sliced.Count));
+        return sliced;
     }
 
     /// <summary>
@@ -283,13 +378,7 @@ public sealed class ClientPlotedDevices : UserPlotedDevices
                 }
 
                 // Slice the data via startpoint and duration, and inject it into the motor's recorded positions.
-                var sliced = motor.Data.Skip(startIndex).Take(count).ToList();
-                // add missing elements to ensure unified size.
-                if (sliced.Count < count)
-                {
-                    var missing = count - sliced.Count;
-                    sliced.AddRange(Enumerable.Repeat(0.0, missing));
-                }
+                var sliced = SliceMotorData(motor.Data, startIndex, count);
                 // inject data.
                 motorDot.InjectPlaybackData(sliced, _patternInfo);
                 Log.LogInformation($"Injected {sliced.Count()} data points into motor [{motor.MotorIdx}] on device [{device.FactoryName}] for playback.");

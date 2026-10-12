@@ -275,7 +275,7 @@ public class ModPresetManager : DisposableMediatorSubscriberBase, IHybridSavable
     {
         var file = _fileNames.CustomModSettings;
         ModPresetStorage.Clear();
-        if (!File.Exists(file))
+        if (_saver.Load(this) is not { } jObject)
         {
             Logger.LogWarning("No CustomModSettings file found at {0}", file);
             // create a new file with default values.
@@ -283,9 +283,6 @@ public class ModPresetManager : DisposableMediatorSubscriberBase, IHybridSavable
             return;
         }
 
-        // Read the json from the file.
-        var jsonText = File.ReadAllText(file);
-        var jObject = JObject.Parse(jsonText);
         var version = jObject["Version"]?.Value<int>() ?? 0;
 
         // Perform Migrations if any, and then load the data.

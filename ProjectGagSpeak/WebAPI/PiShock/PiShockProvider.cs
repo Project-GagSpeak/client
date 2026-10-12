@@ -2,9 +2,10 @@ using CkCommons;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
-using GagspeakAPI.Data.Struct;
 using GagspeakAPI.User;
 using System.Net;
+using System.Net.Http.Json;
+using System.Net.WebSockets;
 using System.Text.Json;
 using SysJsonSerializer = System.Text.Json.JsonSerializer;
 
@@ -12,7 +13,10 @@ namespace GagSpeak.WebAPI;
 
 public sealed class PiShockProvider : DisposableMediatorSubscriberBase
 {
-    private const string ApiBaseUri = "https://api.pishock.com";
+    private const string AccountUrl        = "https://api.pishock.com/Account";
+    private const string OperateByShareUrl = "https://api.pishock.com/Shockers/OperateByShare";
+    private const string DevicesUrl        = "https://ps.pishock.com/PiShock/GetUserDevices";
+    private const string BrokerUrl         = "wss://broker.pishock.com/v2";
 
     private readonly HttpClient _httpClient;
     private readonly MainConfig _mainConfig;
@@ -20,13 +24,16 @@ public sealed class PiShockProvider : DisposableMediatorSubscriberBase
 
     public enum ConnectState { NotAttempted, Success, AuthFailed, NetworkError }
 
+    private sealed record PiShockAccount(int UserId);
+
+    private int _userId;
     private List<(int Id, string Name)> _cachedShockers = [];
-    private List<JsonElement> _cachedShockerData = [];
+    private Dictionary<int, int> _shockerClientIds = []; // ShockerId → ClientId
     private ConnectState _connectState = ConnectState.NotAttempted;
 
     public IReadOnlyList<(int Id, string Name)> CachedShockers => _cachedShockers;
     public ConnectState LastConnectState => _connectState;
-    public bool IsConfigured => !string.IsNullOrEmpty(_mainConfig.Data.PiShockApiKey);
+    public bool IsConfigured => !string.IsNullOrEmpty(_mainConfig.Data.PiShockApiKey) && !string.IsNullOrEmpty(_mainConfig.Data.PiShockUsername);
     public int ShockerCount => _cachedShockers.Count;
 
     public PiShockProvider(ILogger<PiShockProvider> logger, GagspeakMediator mediator, MainConfig mainConfig,
@@ -58,30 +65,42 @@ public sealed class PiShockProvider : DisposableMediatorSubscriberBase
     public async Task ConnectAsync()
     {
         _cachedShockers = [];
-        _cachedShockerData = [];
+        _shockerClientIds = [];
         try
         {
-            var resp = await _httpClient.SendAsync(AuthedRequest(HttpMethod.Get, $"{ApiBaseUri}/Share/GetShared")).ConfigureAwait(false);
-            var body = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
-            Logger.LogDebug("PiShock Connect: status={s} body={b}", (int)resp.StatusCode, body);
-
-            if (resp.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
+            var authResp = await _httpClient.SendAsync(AuthedRequest(HttpMethod.Get, AccountUrl)).ConfigureAwait(false);
+            if (authResp.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
             {
                 _connectState = ConnectState.AuthFailed;
-                Logger.LogWarning("PiShock authentication failed (HTTP {code}).", (int)resp.StatusCode);
+                Logger.LogWarning("PiShock authentication failed (HTTP {code}).", (int)authResp.StatusCode);
                 return;
             }
 
-            if (!resp.IsSuccessStatusCode || string.IsNullOrWhiteSpace(body))
+            var account = authResp.IsSuccessStatusCode ? await authResp.Content.ReadFromJsonAsync<PiShockAccount>().ConfigureAwait(false) : null;
+            if (account is null || account.UserId == 0)
             {
                 _connectState = ConnectState.NetworkError;
-                Logger.LogWarning("PiShock connection error (HTTP {code}).", (int)resp.StatusCode);
+                Logger.LogWarning("PiShock auth error (HTTP {code}).", (int)authResp.StatusCode);
+                return;
+            }
+            Logger.LogDebug("PiShock Auth: userId={u}", account.UserId);
+
+            var devicesResp = await _httpClient.SendAsync(AuthedRequest(HttpMethod.Get, $"{DevicesUrl}?UserId={account.UserId}")).ConfigureAwait(false);
+            var devicesBody = await devicesResp.Content.ReadAsStringAsync().ConfigureAwait(false);
+            Logger.LogDebug("PiShock GetUserDevices: status={s} body={b}", (int)devicesResp.StatusCode, devicesBody);
+            if (!devicesResp.IsSuccessStatusCode)
+            {
+                _connectState = ConnectState.NetworkError;
+                Logger.LogWarning("PiShock device fetch error (HTTP {code}).", (int)devicesResp.StatusCode);
                 return;
             }
 
+            _userId = account.UserId;
+            (_cachedShockers, _shockerClientIds) = ParseShockers(devicesBody);
             _connectState = ConnectState.Success;
-            (_cachedShockers, _cachedShockerData) = ParseShockers(body);
             Logger.LogInformation("PiShock connected: {count} device(s) found.", _cachedShockers.Count);
+            if (ShockerCount > 0)
+                GagspeakEventManager.AchievementEvent(UnlocksEvent.DeviceConnected);
         }
         catch (Exception ex)
         {
@@ -90,48 +109,24 @@ public sealed class PiShockProvider : DisposableMediatorSubscriberBase
         }
     }
 
-    private static (List<(int Id, string Name)> Shockers, List<JsonElement> Data) ParseShockers(string body)
+    private static (List<(int Id, string Name)>, Dictionary<int, int>) ParseShockers(string body)
     {
-        try
+        var shockers = new List<(int Id, string Name)>();
+        var clientIds = new Dictionary<int, int>();
+
+        using var doc = JsonDocument.Parse(body);
+        foreach (var hub in doc.RootElement.EnumerateArray())
         {
-            using var doc = JsonDocument.Parse(body);
-            var root = doc.RootElement;
-            JsonElement arr;
-            if (root.ValueKind == JsonValueKind.Array)
-                arr = root;
-            else if (root.TryGetProperty("value", out var nested) && nested.ValueKind == JsonValueKind.Array)
-                arr = nested;
-            else
-                return ([], []);
-
-            var data = arr.EnumerateArray().Select(e => e.Clone()).ToList();
-            var shockers = data
-                .Where(s => (s.TryGetProperty("Id", out _) || s.TryGetProperty("id", out _)) &&
-                            (s.TryGetProperty("Name", out _) || s.TryGetProperty("name", out _)))
-                .Select(s =>
-                {
-                    var id = s.TryGetProperty("Id", out var ip) ? ip.GetInt32() : s.GetProperty("id").GetInt32();
-                    var name = s.TryGetProperty("Name", out var np) ? np.GetString() : s.GetProperty("name").GetString();
-                    return (id, name ?? "Unknown");
-                })
-                .DistinctBy(s => s.id)
-                .ToList();
-            return (shockers, data);
+            var clientId = hub.GetProperty("ClientId").GetInt32();
+            foreach (var shocker in hub.GetProperty("Shockers").EnumerateArray())
+            {
+                var id = shocker.GetProperty("ShockerId").GetInt32();
+                if (!clientIds.TryAdd(id, clientId))
+                    continue;
+                shockers.Add((id, shocker.GetProperty("Name").GetString() ?? "Unknown"));
+            }
         }
-        catch { return ([], []); }
-    }
-
-    public int GetPairShockerId(string uid)
-    {
-        if (_mainConfig.Data.PairShockerIds.TryGetValue(uid, out var id) && id != 0)
-            return id;
-        return _mainConfig.Data.GlobalShockerId;
-    }
-
-    public void SetPairShockerId(string uid, int id)
-    {
-        _mainConfig.Data.PairShockerIds[uid] = id;
-        _mainConfig.Save();
+        return (shockers, clientIds);
     }
 
     private HttpRequestMessage AuthedRequest(HttpMethod method, string url)
@@ -139,78 +134,6 @@ public sealed class PiShockProvider : DisposableMediatorSubscriberBase
         var req = new HttpRequestMessage(method, url);
         req.Headers.Add("X-PiShock-Api-Key", _mainConfig.Data.PiShockApiKey);
         return req;
-    }
-
-    public Task<PiShockPermissions> GetPermissionsFromCode(string shareCode)
-    {
-        if (shareCode.IsNullOrEmpty())
-        {
-            Logger.LogWarning("Attempted to get PiShock permissions with empty share code.");
-            return Task.FromResult(new PiShockPermissions());
-        }
-
-        if (_connectState != ConnectState.Success || _cachedShockerData.Count == 0)
-        {
-            Logger.LogWarning("PiShock not connected or no devices cached. Connect via Settings first.");
-            return Task.FromResult(new PiShockPermissions());
-        }
-
-        try
-        {
-            foreach (var shocker in _cachedShockerData)
-            {
-                var code = shocker.TryGetProperty("Code", out var cp)       ? cp.GetString()
-                         : shocker.TryGetProperty("code", out cp)           ? cp.GetString()
-                         : shocker.TryGetProperty("ShareCode", out var scp) ? scp.GetString()
-                         : shocker.TryGetProperty("shareCode", out scp)     ? scp.GetString()
-                         : null;
-
-                if (code == null || !code.Equals(shareCode, StringComparison.OrdinalIgnoreCase))
-                    continue;
-
-                return Task.FromResult(ExtractPermissions(shocker));
-            }
-
-            var targetId = _mainConfig.Data.GlobalShockerId;
-            if (targetId != 0)
-            {
-                foreach (var shocker in _cachedShockerData)
-                {
-                    if ((shocker.TryGetProperty("Id", out var idp) || shocker.TryGetProperty("id", out idp)) && idp.GetInt32() == targetId)
-                    {
-                        Logger.LogDebug("Share code not found by name, falling back to GlobalShockerId {id}", targetId);
-                        return Task.FromResult(ExtractPermissions(shocker));
-                    }
-                }
-            }
-
-            if (_cachedShockerData.Count > 0)
-            {
-                Logger.LogDebug("Share code not found, using first available shocker permissions");
-                return Task.FromResult(ExtractPermissions(_cachedShockerData[0]));
-            }
-
-            Logger.LogWarning("Share code {code} not found and no shockers available.", shareCode);
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "PiShock GetPermissionsFromCode error");
-        }
-        return Task.FromResult(new PiShockPermissions());
-    }
-
-    private PiShockPermissions ExtractPermissions(JsonElement shocker)
-    {
-        var canShock   = (shocker.TryGetProperty("AllowShock",   out var s) || shocker.TryGetProperty("CanShock",   out s) ||
-                          shocker.TryGetProperty("allowShock",   out s)    || shocker.TryGetProperty("canShock",   out s)) && s.GetBoolean();
-        var canVibrate = (shocker.TryGetProperty("AllowVibrate", out var v) || shocker.TryGetProperty("CanVibrate", out v) ||
-                          shocker.TryGetProperty("allowVibrate", out v)    || shocker.TryGetProperty("canVibrate", out v)) && v.GetBoolean();
-        var canBeep    = (shocker.TryGetProperty("AllowBeep",    out var b) || shocker.TryGetProperty("CanBeep",    out b) ||
-                          shocker.TryGetProperty("allowBeep",    out b)    || shocker.TryGetProperty("canBeep",    out b)) && b.GetBoolean();
-        var maxIntensity = (shocker.TryGetProperty("MaxIntensity", out var mi) || shocker.TryGetProperty("maxIntensity", out mi)) ? mi.GetInt32() : 100;
-        var maxDuration  = (shocker.TryGetProperty("MaxDuration",  out var md) || shocker.TryGetProperty("maxDuration",  out md)) ? md.GetInt32() : 15;
-        Logger.LogDebug("PiShock permissions: shock={s} vibe={v} beep={b} maxI={i} maxD={d}", canShock, canVibrate, canBeep, maxIntensity, maxDuration);
-        return new PiShockPermissions(canShock, canVibrate, canBeep, maxIntensity, maxDuration);
     }
 
     public void PerformShockCollarAct(ShockCollarAction dto)
@@ -228,10 +151,10 @@ public sealed class PiShockProvider : DisposableMediatorSubscriberBase
             dto = dto with { Duration = 1000 };
         }
 
-        var shockerId = GetPairShockerId(dto.User.UID);
-        if (shockerId == 0)
+        var shareCode = enactor.OwnPerms.PiShockShareCode;
+        if (string.IsNullOrWhiteSpace(shareCode))
         {
-            Logger.LogWarning("Received shock instruction but no shocker is configured for user {uid}.", dto.User.UID);
+            Logger.LogWarning("Received shock instruction but no share code is set for user {uid}.", dto.User.UID);
             return;
         }
 
@@ -256,33 +179,97 @@ public sealed class PiShockProvider : DisposableMediatorSubscriberBase
 
         Logger.LogDebug("Executing Shock Instruction via pair permissions.", LogFilter.Callbacks);
         Mediator.Publish(new EventMessage(new(enactor.GetNickAliasOrUid(), enactor.User.UID, InteractionType.PiShockUpdate, eventLogMessage)));
-        ExecuteOperation(shockerId, dto.OpCode, dto.Intensity, dto.Duration);
-        if (dto.OpCode is 0)
-            GagspeakEventManager.AchievementEvent(UnlocksEvent.ShockReceived);
+        OperateByShare(shareCode, dto.OpCode, dto.Intensity, dto.Duration);
+    }
+
+    // PiShock enforces the share code's own limits, rejecting anything outside them.
+    private async void OperateByShare(string shareCode, int opCode, int intensity, int duration)
+    {
+        try
+        {
+            var req = AuthedRequest(HttpMethod.Post, $"{OperateByShareUrl}/{Uri.EscapeDataString(shareCode)}");
+            req.Content = JsonContent.Create(new
+            {
+                AgentName = "GagSpeak",
+                Operation = opCode,
+                Duration = Math.Clamp(duration, 300, 15000),
+                Intensity = Math.Clamp(intensity, 0, 100),
+                IntensityAsPercentage = false,
+            });
+
+            var resp = await _httpClient.SendAsync(req).ConfigureAwait(false);
+            if (resp.IsSuccessStatusCode)
+            {
+                Logger.LogDebug("PiShock share operation sent (HTTP {code}).", (int)resp.StatusCode);
+                if (opCode is 0)
+                    GagspeakEventManager.AchievementEvent(UnlocksEvent.ShockReceived);
+                return;
+            }
+
+            var reason = (int)resp.StatusCode switch
+            {
+                404 => "share code not found",
+                405 => "operation not allowed by the share code",
+                406 => "device is not V3",
+                410 => "share is locked",
+                412 => "intensity exceeds the share code's limit",
+                416 => "duration exceeds the share code's limit",
+                503 => "share or shocker is paused",
+                _   => "unexpected response",
+            };
+            Logger.LogWarning("PiShock share operation rejected (HTTP {code}): {reason}.", (int)resp.StatusCode, reason);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "PiShock share operation error");
+        }
     }
 
     public async void ExecuteOperation(int shockerId, int opCode, int intensity, int duration)
     {
+        if (!_shockerClientIds.TryGetValue(shockerId, out var clientId))
+        {
+            Logger.LogWarning("PiShock shocker {id} not found on this account. Reconnect via Settings.", shockerId);
+            return;
+        }
+
+        var mode = opCode switch { 0 => "s", 1 => "v", 2 => "b", _ => null };
+        if (mode is null)
+            return;
+
+        var command = new
+        {
+            Operation = "PUBLISH",
+            PublishCommands = new[]
+            {
+                new
+                {
+                    Target = $"c{clientId}-ops",
+                    Body = new
+                    {
+                        id = shockerId,
+                        m  = mode,
+                        i  = Math.Clamp(intensity, 0, 100),
+                        d  = Math.Clamp(duration, 300, 15000),
+                        r  = true,
+                        l  = new { u = _userId, ty = "api", w = false, h = false, o = "GagSpeak" },
+                    },
+                },
+            },
+        };
+
         try
         {
-            var req = AuthedRequest(HttpMethod.Post, $"{ApiBaseUri}/Shockers/{shockerId}");
-            var durationMs   = Math.Clamp(duration, 300, 15000);
-            var intensityPct = Math.Clamp(intensity, 0, 100);
-            req.Content = new StringContent(
-                SysJsonSerializer.Serialize(new
-                {
-                    AgentName            = "GagSpeak",
-                    Operation            = opCode,
-                    Duration             = durationMs,
-                    Intensity            = intensityPct,
-                    IntensityAsPercentage = true,
-                }), Encoding.UTF8, "application/json");
-            var resp = await _httpClient.SendAsync(req).ConfigureAwait(false);
-            var body = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
-            if (resp.IsSuccessStatusCode)
-                Logger.LogDebug("PiShock operation sent successfully (HTTP {code})", (int)resp.StatusCode);
-            else
-                Logger.LogWarning("PiShock operation returned unexpected status: {status} body={b}", (int)resp.StatusCode, body);
+            var username = Uri.EscapeDataString(_mainConfig.Data.PiShockUsername);
+            var apiKey = Uri.EscapeDataString(_mainConfig.Data.PiShockApiKey);
+            using var ws = new ClientWebSocket();
+            await ws.ConnectAsync(new Uri($"{BrokerUrl}?Username={username}&ApiKey={apiKey}"), CancellationToken.None).ConfigureAwait(false);
+            await ws.SendAsync(SysJsonSerializer.SerializeToUtf8Bytes(command), WebSocketMessageType.Text, true, CancellationToken.None).ConfigureAwait(false);
+
+            var buffer = new byte[4096];
+            var reply = await ws.ReceiveAsync(buffer, CancellationToken.None).ConfigureAwait(false);
+            Logger.LogDebug("PiShock publish response: {r}", Encoding.UTF8.GetString(buffer, 0, reply.Count));
+            await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, null, CancellationToken.None).ConfigureAwait(false);
         }
         catch (Exception ex)
         {

@@ -40,15 +40,12 @@ public class NicksConfig : IHybridSavable
     {
         var file = _saver.FileNames.Nicknames;
         Svc.Logger.Information("Loading in Config for file: " + file);
-        if (!File.Exists(file))
+        if (_saver.Load(this) is not { } jObject)
         {
             Svc.Logger.Warning("Config file not found for: " + file);
             return;
         }
 
-        // Do not try-catch these, invalid loads of these should not allow the plugin to load.
-        var jsonText = File.ReadAllText(file);
-        var jObject = JObject.Parse(jsonText);
         var version = jObject["Version"]?.Value<int>() ?? 0;
 
         switch (version)

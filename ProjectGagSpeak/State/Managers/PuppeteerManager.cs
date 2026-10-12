@@ -197,8 +197,7 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
         Puppeteers.Clear();
         try
         {
-            JObject jObject;
-            if (!File.Exists(file))
+            if (_saver.Load(this) is not { } jObject)
             {
                 Logger.LogDebug($"[File Not Found] {file}");
 
@@ -218,13 +217,7 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
                 Save();
                 return;
             }
-            else
-            {
-                var jsonText = File.ReadAllText(file);
-                jObject = JObject.Parse(jsonText);
-            }
 
-            // Read the json from the file.
             var version = jObject["Version"]?.Value<int>() ?? 1;
 
             // Perform Migrations if any, and then load the data.
@@ -313,6 +306,7 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
             Identifier = Guid.TryParse(obj["Identifier"]?.Value<string>(), out var guid) ? guid : throw new InvalidOperationException("Invalid GUID"),
             Enabled = obj["Enabled"]?.Value<bool>() ?? false,
             Label = obj["Label"]?.Value<string>() ?? string.Empty,
+            IgnoreCase = obj["IgnoreCase"]?.Value<bool>() ?? false,
             InputCommand = obj["InputCommand"]?.Value<string>() ?? string.Empty,
             Actions = ParseExecutions(obj["Actions"] as JArray),
             WhitelistedUIDs = obj["WhitelistedUIDs"] is JArray arr ? arr.Select(uid => uid.Value<string>() ?? string.Empty).ToHashSet() : new HashSet<string>()

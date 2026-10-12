@@ -250,7 +250,11 @@ public class RestraintsPanel : DisposableMediatorSubscriberBase
         // if no item is selected, display the unique 'Applier' group.
         if (data.Identifier == Guid.Empty)
         {
-            _activeItemDrawer.ApplyItemGroup(data);
+            // this shouldn't happen but can... so inform the user when something broke.
+            if (data.IsLocked())
+                _activeItemDrawer.UnlockItemGroup(data, null);
+            else
+                _activeItemDrawer.ApplyItemGroup(data);
             _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.SelectingRestraint, WardrobeUI.LastPos, WardrobeUI.LastSize, _ =>
             {
                 var cache = (RestraintGuideCache)_;

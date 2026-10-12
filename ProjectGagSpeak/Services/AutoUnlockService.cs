@@ -50,6 +50,7 @@ public sealed class AutoUnlockService : BackgroundService
     private readonly CharaDataDistributor _dds;
     private readonly MainConfig _config;
     private readonly CacheStateManager _cacheManager;
+    private readonly HardcoreEscapeService _escape;
     
     // the interval tasks to check for
     private readonly List<Task> _intervalTasks = [];
@@ -63,7 +64,7 @@ public sealed class AutoUnlockService : BackgroundService
         KinksterManager kinksters, GagRestrictionManager gags, RestrictionManager restrictions, 
         RestraintManager restraints, CursedLootManager cursedLoot, PatternManager patterns, 
         AlarmManager alarms, CallbackHandler visuals, PlayerCtrlHandler hcHandler, 
-        CharaDataDistributor dds, MainConfig config, CacheStateManager cacheManager)
+        CharaDataDistributor dds, MainConfig config, CacheStateManager cacheManager, HardcoreEscapeService escape)
     {
         _logger = logger;
         _mediator = mediator;
@@ -82,6 +83,7 @@ public sealed class AutoUnlockService : BackgroundService
         _dds = dds;
         _config = config;
         _cacheManager = cacheManager;
+        _escape = escape;
     }
 
     protected override Task ExecuteAsync(CancellationToken stoppingToken)
@@ -91,7 +93,7 @@ public sealed class AutoUnlockService : BackgroundService
         _intervalTasks.Add(CheckOnInterval(1000, OnSecond, stoppingToken));
         _intervalTasks.Add(CheckOnInterval(5000, OnFiveSeconds, stoppingToken));
         _intervalTasks.Add(CheckOnInterval(15000, OnQuarterMinute, stoppingToken));
-        _intervalTasks.Add(CheckOnInterval(60000, OnMinute, stoppingToken));
+        _intervalTasks.Add(CheckOnMinuteStart(OnMinute, stoppingToken));
 
         // Wait for all tasks to complete (which will be when stoppingToken is cancelled)
         return Task.CompletedTask;
@@ -103,6 +105,18 @@ public sealed class AutoUnlockService : BackgroundService
         {
             Generic.Safe(checkFunc);
             await Task.Delay(msDelay, stoppingToken);
+        }
+    }
+
+    // Runs just after the start of every clock minute, so time-of-day checks (alarms) never skip or drift past a minute.
+    private async Task CheckOnMinuteStart(Action checkFunc, CancellationToken stoppingToken)
+    {
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            var now = DateTime.Now;
+            var nextMinute = now.AddTicks(-(now.Ticks % TimeSpan.TicksPerMinute)).AddMinutes(1).AddMilliseconds(500);
+            await Task.Delay(nextMinute - now, stoppingToken);
+            Generic.Safe(checkFunc);
         }
     }
 
@@ -207,7 +221,7 @@ public sealed class AutoUnlockService : BackgroundService
 
                 // Auto remove Gag if configured to do so.
                 var shouldAutoRemove = _config.Data.RemoveGagOnTimerExpire &&
-                                       (!_config.Data.HardcoreEscape || backup.PadlockAssigner != MainHub.UID);
+                                       (!_escape.HardcoreEscapeEnabled || _escape.CanDisable || backup.PadlockAssigner != MainHub.UID);
                 if (shouldAutoRemove &&
                     await _dds.PushNewActiveGagSlot(index, new ActiveGagSlot(), DataUpdateType.Removed)
                               .ConfigureAwait(false) is not null)
@@ -254,7 +268,7 @@ public sealed class AutoUnlockService : BackgroundService
                 
                 // Auto remove if configured to do so.
                 var shouldAutoRemove = _config.Data.RemoveRestrictionOnTimerExpire &&
-                                       (!_config.Data.HardcoreEscape || backup.PadlockAssigner != MainHub.UID);
+                                       (!_escape.HardcoreEscapeEnabled || _escape.CanDisable || backup.PadlockAssigner != MainHub.UID);
                 if (shouldAutoRemove &&
                     await _dds.PushNewActiveRestriction(index, new ActiveRestriction(), DataUpdateType.Removed)
                               .ConfigureAwait(false) is not null)
@@ -302,7 +316,7 @@ public sealed class AutoUnlockService : BackgroundService
             
             // Auto remove if configured to do so.
             var shouldAutoRemove = _config.Data.RemoveRestraintOnTimerExpire &&
-                                   (!_config.Data.HardcoreEscape || backup.PadlockAssigner != MainHub.UID);
+                                   (!_escape.HardcoreEscapeEnabled || _escape.CanDisable || backup.PadlockAssigner != MainHub.UID);
             if (shouldAutoRemove &&
                 await _dds.PushNewActiveRestraint(new CharaActiveRestraint(), DataUpdateType.Removed)
                           .ConfigureAwait(false) is not null)
@@ -561,7 +575,8 @@ public sealed class AutoUnlockService : BackgroundService
 
             // Fire that alarm!
             _logger.LogInformation($"Alarm Triggered!: [{alarm.PatternRef.Label}] Playing Pattern ({alarm.PatternRef.Label})", LogFilter.Alarms);
-            _patterns.SwitchPattern(alarm.PatternRef, alarm.PatternStartPoint, alarm.PatternDuration, MainHub.UID);
+            _patterns.LayerPattern(alarm.PatternRef, alarm.PatternStartPoint, alarm.PatternDuration, MainHub.UID);
+            GagspeakEventManager.AchievementEvent(UnlocksEvent.AlarmTriggered);
         }
 
         return Task.CompletedTask;

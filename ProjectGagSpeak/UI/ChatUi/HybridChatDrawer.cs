@@ -295,7 +295,7 @@ public class HybridChatDrawer : RichEmoteChatDrawer
         ImGui.SetNextItemWidth(width - rWidth);
         ImGui.InputTextWithHint($"##chat-input-{ChatLog!.ID}", GetChatInputHint(), ref previewMessage, 400, ImGuiInputTextFlags.CallbackHistory | ImGuiInputTextFlags.CallbackAlways, OnChatInputCallback);
         // Process submission Prevent losing chat focus after pressing the Enter key.
-        if (ImGui.IsItemFocused() && ImGui.IsKeyPressed(ImGuiKey.Enter))
+        if (ImGui.IsItemFocused() && (ImGui.IsKeyPressed(ImGuiKey.Enter) || ImGui.IsKeyPressed(ImGuiKey.KeypadEnter)))
         {
             SendMessage(previewMessage);
             shouldFocusInput = true;
