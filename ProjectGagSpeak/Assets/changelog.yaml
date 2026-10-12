@@ -12,7 +12,10 @@ changelog:
         title: "Toybox Update"
         accent: "Blue"
         bullets:
+          - text: "Simulated Vibrator works again, and has multi-motor support."
+            isImportant: true
           - text: "Toybox and personal remote now work."
+            isImportant: true
             contributor: "AzureRavie"
           - text: "Patterns work correctly and can be started and stopped as expected."
             contributor: "AzureRavie"
