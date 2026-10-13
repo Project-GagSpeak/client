@@ -2,6 +2,7 @@ using CkCommons;
 using CkCommons.Gui;
 using CkCommons.Raii;
 using CkCommons.Widgets;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.FileSystems;
@@ -12,7 +13,8 @@ using GagSpeak.Services.Tutorial;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagSpeak.WebAPI;
-using Dalamud.Bindings.ImGui;
+using GagspeakAPI.Attributes;
+using GagspeakAPI.Extensions;
 using OtterGui.Text;
 
 namespace GagSpeak.Gui.Toybox;
@@ -127,6 +129,18 @@ public partial class PatternsPanel
 
         CkGui.Separator();
         DrawDurationLength(pattern, isEditorItem);
+
+        ImGui.Spacing();
+        CkGui.ColorText("Primary Device:", ImGuiColors.ParsedGold);
+        CkGui.TextInline(pattern.PlaybackData.PrimaryDeviceUsed.ToName());
+        if (pattern.PlaybackData.SecondaryDeviceUsed is not ToyBrandName.Unknown)
+        {
+            CkGui.ColorText("Secondary Device:", ImGuiColors.ParsedGold);
+            CkGui.TextInline(pattern.PlaybackData.SecondaryDeviceUsed.ToName());
+        }
+        // Motors
+        CkGui.ColorText("Motors Used:", ImGuiColors.ParsedGold);
+        CkGui.TextInline(pattern.PlaybackData.MotorsUsed.ToString());
 
         CkGui.Separator();
         DrawPatternTimeSpans(pattern, isEditorItem);

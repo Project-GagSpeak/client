@@ -139,6 +139,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<GagSpeakHost>()
         .AddSingleton<EventAggregator>()
         .AddSingleton<GagSpeakLoc>()
+        .AddSingleton<CommandManager>()
         .AddSingleton<GagspeakEventManager>()
         .AddSingleton((s) =>
         {
@@ -483,7 +484,6 @@ public static class GagSpeakServiceExtensions
         .AddScoped<WindowMediatorSubscriberBase, StyleEditorUI>()
 
         // Scoped Services
-        .AddScoped<CommandManager>()
         .AddScoped<TextureService>()
         .AddScoped<UiService>();
     #endregion ScopedServices

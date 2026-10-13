@@ -81,6 +81,7 @@ public sealed class CommandManager : DisposableMediatorSubscriberBase
 
     protected override void Dispose(bool disposing)
     {
+        base.Dispose(disposing);
         Svc.Commands.RemoveHandler(ShortCommand);
         Svc.Commands.RemoveHandler(MainCommand);
         Svc.Commands.RemoveHandler(SafewordCommand);
@@ -90,7 +91,6 @@ public sealed class CommandManager : DisposableMediatorSubscriberBase
         Svc.Commands.RemoveHandler(GsTellCommand);
         Svc.Commands.RemoveHandler(DeathRollShortcutCommand);
         Svc.Commands.RemoveHandler(DeathRollShortcutCommandAlias);
-        base.Dispose(disposing);
     }
 
     private void VoidChatCmd(string _, string __)
