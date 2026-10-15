@@ -270,7 +270,7 @@ public sealed class CharaDataDistributor : DisposableMediatorSubscriberBase
         try
         {
             KinkPlateContent currentContent;
-            if (_kinkplates.Contains(MainHub.OwnUserData) && _kinkplates.GetUserProfile(MainHub.OwnUserData) is { } existingProfile)
+            if (_kinkplates.Contains(MainHub.OwnUserData) && _kinkplates.GetUserProfile(MainHub.OwnUserData) is { IsInitialized: true } existingProfile)
                 currentContent = existingProfile.Data;
             else
             {
