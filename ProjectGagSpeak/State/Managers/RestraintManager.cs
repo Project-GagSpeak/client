@@ -178,6 +178,7 @@ public sealed class RestraintManager : IHybridSavable
         // update values & inform mediator of state change
         data.Identifier = newData.Identifier;
         data.Enabler = enactor;
+        data.ActiveLayers = newData.ActiveLayers;
         _mediator.Publish(new RestraintStateChanged(NewState.Enabled, data, enactor, MainHub.UID));
 
         // Update the applied restraint set if valid in storage
