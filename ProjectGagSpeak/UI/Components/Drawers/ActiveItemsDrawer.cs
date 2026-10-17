@@ -336,7 +336,7 @@ public class ActiveItemsDrawer
             if (dispData != null) // no layers if no valid set, don't draw this.
             {
                 // Below draw out the layers.
-                var willHcStruggle = _escape is { HardcoreEscapeEnabled: true, CanDisable: false };
+                var willHcStruggle = _escape.RequiresStruggle(HardcoreEscapeService.Type.Restraint);
                 var options = RestraintLayer.Values.Skip(1).SkipLast(1).Take(dispData.Layers.Count);
                 _layerFlagsWidget.DrawLayerCheckboxes(data.ActiveLayers, options, _ =>
                 {
@@ -483,7 +483,7 @@ public class ActiveItemsDrawer
             if (dispData != null) // dont draw if display data is null.
             {
                 // Below draw out the layers.
-                var willHcStruggle = _escape is { HardcoreEscapeEnabled: true, CanDisable: false };
+                var willHcStruggle = _escape.RequiresStruggle(HardcoreEscapeService.Type.Restraint);
                 var options = RestraintLayer.Values.Skip(1).SkipLast(1).Take(dispData.Layers.Count);
                 _layerFlagsWidget.DrawLayerCheckboxes(data.ActiveLayers, options, _ =>
                 {

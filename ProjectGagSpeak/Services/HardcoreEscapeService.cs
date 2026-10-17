@@ -258,6 +258,21 @@ public class HardcoreEscapeService : DisposableMediatorSubscriberBase
 
         return CalculateDifficultyMultiplier(item) > 1;
     }
+    
+    /// <summary>
+    /// Determines if the item in the target slot requires struggling to remove. Items with a tightness of 1 are trivial to remove.
+    /// For restraints, tightness accounts for active layers, so a trivial set still requires struggling if any active layer does.
+    /// </summary>
+    /// <param name="type"></param>
+    /// <param name="layerIdx"></param>
+    /// <returns></returns>
+    /// <exception cref="InvalidOperationException">called for an empty slot</exception>
+    public bool RequiresStruggle(Type type, int layerIdx = 0)
+    {
+        var (item, defaultTightness, _, _) = GetItemDetails(type, layerIdx);
+        // Tightness 1 is trivial to remove, 0 is impossible
+        return IsHardToRemove(item) && defaultTightness != 1;
+    }
 
     /// <summary>
     /// Calculates the difficulty in removing the target item. Difficulty increased by number of active traits across all items and whether the target item is the most restrictive one or not.
