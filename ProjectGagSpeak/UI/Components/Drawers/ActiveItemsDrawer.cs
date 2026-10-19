@@ -261,12 +261,13 @@ public class ActiveItemsDrawer
         // Draw out the framed image first.
         DrawRestrictionImage(dispData, height, 10f);
         var drawPos = ImGui.GetItemRectMin() + new Vector2(ImGui.GetItemRectSize().X, 0);
-        CkGui.AttachTooltip(LockTooltip(dispData?.Label, data.Enabler, "Restriction")
-                            + _escape.ProgressTooltip(HardcoreEscapeService.Type.Restriction, slotIdx),
-                            color: ImGuiColors.ParsedGold);
         if (dispData is null)
             CkGui.AttachTooltip("--SEP----COL--The item that was here couldn't be found." +
                 "--NL--It may have been deleted or the data is corrupted.--COL--", color: ImGuiColors.DalamudRed);
+        else
+            CkGui.AttachTooltip(LockTooltip(dispData.Label, data.Enabler, "Restriction")
+                                + _escape.ProgressTooltip(HardcoreEscapeService.Type.Restriction, slotIdx),
+                                color: ImGuiColors.ParsedGold);
         if (drawGuide) _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.Removing, WardrobeUI.LastPos, WardrobeUI.LastSize);
 
         if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
@@ -307,12 +308,13 @@ public class ActiveItemsDrawer
         var height = ImGui.GetFrameHeightWithSpacing() * 5 + ImGui.GetFrameHeight();
         DrawRestraintImage(dispData, new Vector2(height / 1.2f, height), CkStyle.ChildRoundingLarge(), CkCol.CurvedHeaderFade.Uint());
         var drawPos = ImGui.GetItemRectMin() + new Vector2(ImGui.GetItemRectSize().X, 0);
-        CkGui.AttachTooltip(LockTooltip(dispData?.Label, data.Enabler, "Restraint")
-                            + _escape.ProgressTooltip(HardcoreEscapeService.Type.Restraint),
-                            color: ImGuiColors.ParsedGold);
         if (dispData is null)
             CkGui.AttachTooltip("--SEP----COL--The item that was here couldn't be found." +
                 "--NL--It may have been deleted or the data is corrupted.--COL--", color: ImGuiColors.DalamudRed);
+        else
+            CkGui.AttachTooltip(LockTooltip(dispData.Label, data.Enabler, "Restraint")
+                                + _escape.ProgressTooltip(HardcoreEscapeService.Type.Restraint),
+                                color: ImGuiColors.ParsedGold);
         _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.RemovingRestraints, WardrobeUI.LastPos, WardrobeUI.LastSize);
 
         if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
@@ -409,10 +411,12 @@ public class ActiveItemsDrawer
             DrawFramedImage(data.Padlock, padlockSize.X, padlockSize.X / 2);
         }
 
-        CkGui.AttachTooltip(UnlockTooltip(dispData?.Label, data.Enabler, data.Padlock, data.PadlockAssigner), color: ImGuiColors.ParsedPink);
         if (dispData is null)
             CkGui.AttachTooltip("--SEP----COL--The item that was here couldn't be found." +
                 "--NL--It may have been deleted or the data is corrupted.--COL--", color: ImGuiColors.DalamudRed);
+        else
+            CkGui.AttachTooltip(UnlockTooltip(dispData.Label, data.Enabler, data.Padlock, data.PadlockAssigner),
+                                color: ImGuiColors.ParsedPink);
 
         // Move over the distance of the framed image.
         ImGui.SameLine();
@@ -440,10 +444,12 @@ public class ActiveItemsDrawer
 
         // Go back and show the image.
         DrawFramedImage(data.Padlock, size.X, size.X / 2);
-        CkGui.AttachTooltip(UnlockTooltip(dispData?.Label, data.Enabler, data.Padlock, data.PadlockAssigner), ImGuiColors.ParsedPink);
         if (dispData is null)
             CkGui.AttachTooltip("--SEP----COL--The item that was here couldn't be found." +
                 "--NL--It may have been deleted or the data is corrupted.--COL--", color: ImGuiColors.DalamudRed);
+        else
+            CkGui.AttachTooltip(UnlockTooltip(dispData.Label, data.Enabler, data.Padlock, data.PadlockAssigner),
+                                ImGuiColors.ParsedPink);
 
         // Move over the distance of the framed image.
         ImGui.SameLine();
