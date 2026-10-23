@@ -26,7 +26,7 @@ namespace GagSpeak.Services;
 
 public class ChatService : DisposableMediatorSubscriberBase
 {
-    internal static RichFilter AllowedTypes = RichFilter.Emotes | RichFilter.Color | RichFilter.Paragraph | RichFilter.Line;
+    internal static RichFilter AllowedTypes = RichFilter.Emotes | RichFilter.Paragraph;
     
     private readonly MainHub _hub;
     private readonly MainConfig _config;

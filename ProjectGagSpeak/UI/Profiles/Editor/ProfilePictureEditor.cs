@@ -353,7 +353,7 @@ public class ProfilePictureEditor : WindowMediatorSubscriberBase
             var lesserDimension = Math.Min(image.Width, image.Height);
 
             // Calculate the cropping rectangle to make the image square
-            var cropRectangle = new Rectangle(0, 0, lesserDimension, lesserDimension);
+            var cropRectangle = new SixLabors.ImageSharp.Rectangle(0, 0, lesserDimension, lesserDimension);
             cropRectangle.X = (image.Width - lesserDimension) / 2;
             cropRectangle.Y = (image.Height - lesserDimension) / 2;
 
@@ -408,7 +408,7 @@ public class ProfilePictureEditor : WindowMediatorSubscriberBase
             zoomedHeight = Math.Min(zoomedHeight, lesserDimension);
 
             // Calculate the cropping rectangle based on the user's alignment selection
-            var cropRectangle = new Rectangle(0, 0, zoomedWidth, zoomedHeight);
+            var cropRectangle = new SixLabors.ImageSharp.Rectangle(0, 0, zoomedWidth, zoomedHeight);
             cropRectangle.X = Math.Max(0, Math.Min((int)((image.Width - zoomedWidth) * _cropX), image.Width - zoomedWidth));
             cropRectangle.Y = Math.Max(0, Math.Min((int)((image.Height - zoomedHeight) * _cropY), image.Height - zoomedHeight));
 
