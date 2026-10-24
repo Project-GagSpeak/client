@@ -3,7 +3,7 @@
     <!--Basic Plugin Definitions-->
     <PropertyGroup>
         <Copyright>Copyright © 2025</Copyright>
-        <Version>2.2.3.0</Version>
+        <Version>2.2.4.0</Version>
         <WarningLevel>4</WarningLevel>
         <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
     </PropertyGroup>
@@ -47,6 +47,7 @@
         <ProjectReference Include="..\Submodules\Penumbra.GameData\Penumbra.GameData.csproj" />
         <ProjectReference Include="..\Submodules\GlamourerAPI\Glamourer.Api.csproj" />
         <ProjectReference Include="..\Submodules\LociAPI\Loci.Api.csproj" />
+        <PackageReference Include="MessagePack" Version="2.5.307" />
 
         <!-- Required for Buttplug, but because Dalamud has its own Newtonsoft Assembly, thus, any
         JObject types, despite being the same, are coming from different assemblies, so we must exclude
@@ -55,7 +56,7 @@
 
         <!--For SignalR server connectivity, helpful for server connectivity processing-->
         <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.11" />
-        <PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.MessagePack" Version="10.0.11" />
+        <PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.MessagePack" Version="10.0.13" />
         <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
         <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
 
@@ -88,6 +89,7 @@
       <Folder Include="PlayerKinkster\Data\" />
     </ItemGroup>
 </Project>
+
 
 
 

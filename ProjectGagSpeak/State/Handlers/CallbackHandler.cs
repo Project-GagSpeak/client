@@ -7,6 +7,7 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagSpeak.WebAPI;
+using GagspeakAPI.Attributes;
 using GagspeakAPI.Connection;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
@@ -220,7 +221,11 @@ public sealed class CallbackHandler : DisposableMediatorSubscriberBase
             await _cacheManager.RemoveRestraintSet(visualRemItem, remLayers);
         // Now apply it.
         if (_restraints.Apply(newData, enactor.UID, out var visualAddItem))
+        {
             await _cacheManager.AddRestraintSet(visualAddItem, enactor.UID);
+            if (newData.ActiveLayers is not RestraintLayer.None)
+                await _cacheManager.AddRestraintSetLayers(visualAddItem, newData.ActiveLayers, enactor.UID);
+        }
     }
 
     public async Task ApplyRestraint(CharaActiveRestraint newData, UserData enactor)
@@ -234,7 +239,11 @@ public sealed class CallbackHandler : DisposableMediatorSubscriberBase
         PostActionMsg(enactor.UID, InteractionType.ApplyRestraint, $"[{setName}] was applied to you!");
 
         if (_restraints.Apply(newData, enactor.UID, out var restraintSet))
+        {
             await _cacheManager.AddRestraintSet(restraintSet, enactor.UID);
+            if (newData.ActiveLayers is not RestraintLayer.None)
+                await _cacheManager.AddRestraintSetLayers(restraintSet, newData.ActiveLayers, enactor.UID);
+        }
     }
 
     public async Task SwapRestraintLayers(CharaActiveRestraint newData, UserData enactor)

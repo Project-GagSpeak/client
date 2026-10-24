@@ -4,6 +4,34 @@ subline: "150+ new emotes, GIF Support, stickers, vanity names, name colors, and
 changelog:
 
   - version: v2.2.3.0
+    date: "October 23rd, 2026"
+    title: "More Polishing, yippee"
+    headerMessage: ""
+    segments:
+      - icon: "Wrench"
+        title: "Adjustments"
+        accent: "Teal"
+        bullets:
+          - text: "Chats now only allow the formatting they are intended to allow."
+            isImportant: true
+      
+      - icon: "Bug"
+        title: "Bug Fixes"
+        accent: "Red"
+        bullets:
+          - text: "Fixed GlobalChat formatting issues causing hard crashes."
+            isImportant: true
+          - text: "Only attach error tooltip when data is missing."
+            contributor: "Yfthbr"
+          - text: "Account for restraint set tightness when determining if layers can be removed."
+            contributor: "AzureRavie, Yfthbr"
+          - text: "Prevent kinkplate from being initialized if the user profile is not initialized yet."
+            contributor: "AzureRavie"
+          - text: "Give the active layers to the server when applying a restraint."
+            contributor: "AzureRavie"
+
+
+  - version: v2.2.3.0
     date: "October 11th, 2026"
     title: "Toybox Fixes, HC Escape V2, QoL, and further Cleanup"
     headerMessage: ""
