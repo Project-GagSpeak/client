@@ -256,7 +256,7 @@ public sealed class DtrService : DisposableMediatorSubscriberBase, IHostedServic
         if (ArousalService.DoLimitedWords) effects.Add("Word Limit");
         if (ArousalService.DoPulse) effects.Add("Pulse");
 
-        var text = $"Arousal {ArousalService.Arousal:F0}% ({stage})";
+        var text = $"({stage})";
         var tooltip = effects.Count > 0 ? $"Effects: {string.Join(", ", effects)}" : "No active effects";
         // The meter changes up to 10 times a second, so only rebuild the entry when what it shows changes.
         if (_arousalEntry.Shown && _arousalText == text + tooltip)
