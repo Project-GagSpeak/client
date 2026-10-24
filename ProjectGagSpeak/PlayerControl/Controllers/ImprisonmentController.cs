@@ -1,6 +1,7 @@
 using CkCommons;
 using Dalamud.Interface.ImGuiNotification;
 using GagSpeak.GameInternals.Detours;
+using GagSpeak.Interop;
 using GagSpeak.PlayerClient;
 using GagSpeak.PlayerControl;
 using GagSpeak.Services.Mediator;
@@ -17,13 +18,17 @@ public class ImprisonmentController : DisposableMediatorSubscriberBase
     private const float DivergenceMargin = 3f;
 
     private readonly HcTaskManager _hcTasks;
+    private readonly IpcCallerVnavmesh _vnav;
     private float? _gaveUpAtDistance;
     private long _gaveUpAtTick;
+    // If the active vnavmesh return has had its path request accepted yet.
+    private bool _navIssued;
 
     public ImprisonmentController(ILogger<ImprisonmentController> logger, GagspeakMediator mediator,
-        HcTaskManager hcTasks) : base(logger, mediator)
+        HcTaskManager hcTasks, IpcCallerVnavmesh vnav) : base(logger, mediator)
     {
         _hcTasks = hcTasks;
+        _vnav = vnav;
 
         Mediator.Subscribe<HcStateCacheChanged>(this, _ => OnHcCacheStateChange());
         Mediator.Subscribe<FrameworkUpdateMessage>(this, _ => FrameworkUpdate());
@@ -118,8 +123,19 @@ public class ImprisonmentController : DisposableMediatorSubscriberBase
         // snapshot the cage, so a task outliving FullStopImprisonment can't retarget to the world origin.
         var origin = CageOrigin;
         var arrival = CageRadius * ArrivalFactor;
-        _hcTasks.InsertTask(() => ReturnToCage(origin, arrival), ReturnToCageName,
-            HcTaskConfiguration.Default with { OnEnd = () => StaticDetours.MoveOverrides.Disable(), Flags = State.HcTaskControl.BlockMovementKeys });
+
+        // Prefer pathing around obstacles when vnavmesh has a mesh for this zone, otherwise walk straight.
+        if (_vnav.IsReady())
+        {
+            _navIssued = false;
+            _hcTasks.InsertTask(() => ReturnToCageNav(origin, arrival), ReturnToCageName,
+                HcTaskConfiguration.Default with { OnEnd = _vnav.Stop, Flags = State.HcTaskControl.BlockMovementKeys });
+        }
+        else
+        {
+            _hcTasks.InsertTask(() => ReturnToCage(origin, arrival), ReturnToCageName,
+                HcTaskConfiguration.Default with { OnEnd = () => StaticDetours.MoveOverrides.Disable(), Flags = State.HcTaskControl.BlockMovementKeys });
+        }
     }
 
     /// <summary>
@@ -132,14 +148,48 @@ public class ImprisonmentController : DisposableMediatorSubscriberBase
         if (result is not null)
             return result;
 
-        // Record where we stopped so we know what counts as 'they moved further out' later on.
+        RecordGiveUp(origin, $"stalled {StaticDetours.MoveOverrides.StalledFor}ms, diverged {StaticDetours.MoveOverrides.DivergedBy:F1} yalms");
+        return null;
+    }
+
+    /// <summary>
+    ///   Paths back toward the cage through vnavmesh. vnavmesh handles its own stuck detection, so
+    ///   once it stops walking while we are still outside, the way back was not reachable.
+    /// </summary>
+    private bool? ReturnToCageNav(Vector3 origin, float arrival)
+    {
+        if (!PlayerData.Available)
+            return false;
+
+        if (PlayerData.DistanceTo(new Vector2(origin.X, origin.Z)) <= arrival)
+            return true;
+
+        // Plugin went away mid-return, end this attempt so the next one walks the straight line instead.
+        if (!IpcCallerVnavmesh.APIAvailable)
+            return null;
+
+        // Keep asking until it accepts, it declines while a previous request is still being computed.
+        if (!_navIssued)
+        {
+            _navIssued = _vnav.MoveCloseTo(origin, arrival);
+            return false;
+        }
+
+        if (_vnav.IsBusy())
+            return false;
+
+        RecordGiveUp(origin, "vnavmesh stopped short");
+        return null;
+    }
+
+    /// <summary> Record where we stopped so we know what counts as 'they moved further out' later on. </summary>
+    private void RecordGiveUp(Vector3 origin, string reason)
+    {
         _gaveUpAtDistance = PlayerData.DistanceTo(CageOriginXZ);
         _gaveUpAtTick = Environment.TickCount64;
-        Logger.LogWarning($"Could not reach the cage at {origin:F2} (gave up {_gaveUpAtDistance:F1} yalms out, " +
-            $"stalled {StaticDetours.MoveOverrides.StalledFor}ms, diverged {StaticDetours.MoveOverrides.DivergedBy:F1} yalms). " +
+        Logger.LogWarning($"Could not reach the cage at {origin:F2} (gave up {_gaveUpAtDistance:F1} yalms out, {reason}). " +
             $"Retrying in {RetryCooldownMs / 1000}s, or sooner if you move further away.");
         Mediator.Publish(new NotificationMessage("Imprisonment", "Something is blocking the way back to your cage!", NotificationType.Warning));
-        return null;
     }
 
     /// <summary>
@@ -161,6 +211,7 @@ public class ImprisonmentController : DisposableMediatorSubscriberBase
     {
         _hcTasks.RemoveIfPresent(ReturnToCageName);
         StaticDetours.MoveOverrides.Disable();
+        _navIssued = false;
 
         ShouldBeImprisoned = false;
         IsImprisoned = false;
