@@ -10,6 +10,7 @@ using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Events;
 using GagSpeak.Services.Mediator;
+using GagSpeak.Utils;
 using GagSpeak.Watchers;
 using GagSpeak.WebAPI;
 using Luna;
@@ -33,6 +34,8 @@ public sealed class DtrService : DisposableMediatorSubscriberBase, IHostedServic
     private IDtrBarEntry _privacyEntry;
     private IDtrBarEntry _notifierEntry;
     private IDtrBarEntry _vibeEntry;
+    private IDtrBarEntry _arousalEntry;
+    private string _arousalText = string.Empty;
 
     private DateTime _lastPrivacyCheck = DateTime.MinValue;
     private static HashSet<nint> _nonKinksters = [];
@@ -54,6 +57,7 @@ public sealed class DtrService : DisposableMediatorSubscriberBase, IHostedServic
         _privacyEntry = CreatePrivacyDtr();
         _notifierEntry = CreateNotifierDtr();
         _vibeEntry = CreateVibeDtr();
+        _arousalEntry = Svc.DtrBar.Get("GagSpeakArousal");
 
         Mediator.Subscribe<DDSUpdateRequests>(this, _ => UpdateRequests());
         Mediator.Subscribe<WatchedObjectCreated>(this, _ => UpdatePrivacy());
@@ -61,6 +65,7 @@ public sealed class DtrService : DisposableMediatorSubscriberBase, IHostedServic
         Mediator.Subscribe<ConnectedMessage>(this, _ => Refresh());
         Mediator.Subscribe<DisconnectedMessage>(this, _ => Refresh());
         Mediator.Subscribe<DTRRefreshMessage>(this, _ => Refresh());
+        Mediator.Subscribe<ArousalChanged>(this, _ => UpdateArousal());
 
         Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, _ => UpdatePrivacyInterval());
     }
@@ -75,10 +80,12 @@ public sealed class DtrService : DisposableMediatorSubscriberBase, IHostedServic
         _privacyEntry.Remove();
         _notifierEntry.Remove();
         _vibeEntry.Remove();
+        _arousalEntry.Remove();
         _requestsEntry = null!;
         _privacyEntry = null!;
         _notifierEntry = null!;
         _vibeEntry = null!;
+        _arousalEntry = null!;
         base.Dispose(disposing);
     }
 
@@ -124,6 +131,7 @@ public sealed class DtrService : DisposableMediatorSubscriberBase, IHostedServic
         _privacyEntry.Shown = false;
         _notifierEntry.Shown = false;
         _vibeEntry.Shown = false;
+        _arousalEntry.Shown = false;
     }
 
     public void Refresh()
@@ -132,6 +140,7 @@ public sealed class DtrService : DisposableMediatorSubscriberBase, IHostedServic
         UpdatePrivacy();
         UpdateNotifier();
         UpdateVibeToy();
+        UpdateArousal();
     }
 
     private void UpdateRequests()
@@ -229,6 +238,34 @@ public sealed class DtrService : DisposableMediatorSubscriberBase, IHostedServic
         _vibeEntry.Shown = true;
         _vibeEntry.Text = new SeString(new IconPayload(BitmapFontIcon.ElementLightning));
         _vibeEntry.Tooltip = new SeString(new TextPayload("Your toys are vibrating"));
+    }
+
+    private void UpdateArousal()
+    {
+        if (!_config.Data.DtrArousal || ClientData.Globals?.GlobalArousal != true || ArousalService.Arousal <= 0)
+        {
+            _arousalEntry.Shown = false;
+            return;
+        }
+
+        var stage = ArousalEffects.StageName(ArousalService.ArousalPercent);
+        var effects = new List<string>();
+        if (ArousalService.DoStutter) effects.Add("Stutter");
+        if (ArousalService.DoBlush) effects.Add("Blush");
+        if (ArousalService.DoGcdDelay) effects.Add("Slowed GCD");
+        if (ArousalService.DoLimitedWords) effects.Add("Word Limit");
+        if (ArousalService.DoPulse) effects.Add("Pulse");
+
+        var text = $"Arousal {ArousalService.Arousal:F0}% ({stage})";
+        var tooltip = effects.Count > 0 ? $"Effects: {string.Join(", ", effects)}" : "No active effects";
+        // The meter changes up to 10 times a second, so only rebuild the entry when what it shows changes.
+        if (_arousalEntry.Shown && _arousalText == text + tooltip)
+            return;
+
+        _arousalText = text + tooltip;
+        _arousalEntry.Shown = true;
+        _arousalEntry.Text = new SeString(new TextPayload(text));
+        _arousalEntry.Tooltip = new SeString(new TextPayload(tooltip));
     }
 
     public Task StartAsync(CancellationToken cancellationToken)

@@ -22,6 +22,7 @@ public class SettingsModulesHardcore
         Arousal,
     }
 
+    private readonly GagspeakMediator _mediator;
     private readonly MainConfig _config;
     private readonly MainHub _hub;
     private readonly HardcoreEscapeService _escape;
@@ -33,6 +34,7 @@ public class SettingsModulesHardcore
     public SettingsModulesHardcore(GagspeakMediator mediator, MainConfig config, MainHub hub,
         HardcoreEscapeService escape, ArousalService arousal)
     {
+        _mediator = mediator;
         _config = config;
         _hub = hub;
         _escape = escape;
@@ -132,7 +134,11 @@ public class SettingsModulesHardcore
 
         var globalArousal = globals.GlobalArousal;
         if (CkGui.Checkbox(GSLoc.Settings.Options.GlobalArousal, ref globalArousal, ArousalService.AnyEffectActive))
-            UiService.SetUITask(async () => await PermHelper.ChangeOwnGlobal(_hub, globals, nameof(GlobalPerms.GlobalArousal), globalArousal));
+            UiService.SetUITask(async () =>
+            {
+                await PermHelper.ChangeOwnGlobal(_hub, globals, nameof(GlobalPerms.GlobalArousal), globalArousal);
+                _mediator.Publish(new DTRRefreshMessage());
+            });
         CkGui.HelpTextFramed(GSLoc.Settings.Options.GlobalArousalTT, true, hFlags: ImGuiHoveredFlags.AllowWhenDisabled);
 
         // Individual effects only matter while Arousal Effects is enabled.
@@ -152,6 +158,8 @@ public class SettingsModulesHardcore
 
         DrawArousalToggle(GSLoc.Settings.Options.ArousalStageToasts, GSLoc.Settings.Options.ArousalStageToastsTT,
             _config.Data.ArousalStageToasts, v => _config.Data.ArousalStageToasts = v, false);
+        DrawArousalToggle(GSLoc.Settings.Options.ArousalDtrLabel, GSLoc.Settings.Options.ArousalDtrTT,
+            _config.Data.DtrArousal, v => { _config.Data.DtrArousal = v; _mediator.Publish(new DTRRefreshMessage()); }, false);
 
         // The meter runs regardless of Arousal Effects, so the timings are always editable.
         var buildMinutes = _config.Data.ArousalBuildMinutes;
