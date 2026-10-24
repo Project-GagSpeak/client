@@ -119,6 +119,7 @@ public class MainConfigData : IAudioConfigData
     public bool ArousalWordLimit { get; set; } = true;
     public bool ArousalBlush { get; set; } = true;
     public bool ArousalGcdDelay { get; set; } = true;
+    public bool ArousalStageToasts { get; set; } = true;
     public HypnoticEffect? HypnoEffectInfo { get; set; } = null;
     public string? Base64CustomImageData { get; set; } = null;
 

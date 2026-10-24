@@ -1200,6 +1200,8 @@ namespace GagSpeak.Localization
         public readonly string ArousalBlushTT = Loc.Localize("MainOptions_ArousalBlushTT", "A pink blush creeps in from the edges of your screen, throbbing at very high arousal.--SEP--Can't be turned off while it's affecting you.");
         public readonly string ArousalGcdDelay = Loc.Localize("MainOptions_ArousalGcdDelay", "Sluggish Actions");
         public readonly string ArousalGcdDelayTT = Loc.Localize("MainOptions_ArousalGcdDelayTT", "At high arousal your combat actions take longer between uses.--SEP--Can't be turned off while it's affecting you.");
+        public readonly string ArousalStageToasts = Loc.Localize("MainOptions_ArousalStageToasts", "Stage Notifications");
+        public readonly string ArousalStageToastsTT = Loc.Localize("MainOptions_ArousalStageToastsTT", "Shows a notification whenever your arousal moves into a new stage.");
         public readonly string ArousalBlur = Loc.Localize("MainOptions_ArousalBlur", "Blurred Vision");
         public readonly string ArousalBlurTT = Loc.Localize("MainOptions_ArousalBlurTT", "Not available yet.");
         public readonly string ArousalBuildTime = Loc.Localize("MainOptions_ArousalBuildTime", "Build-up Time");

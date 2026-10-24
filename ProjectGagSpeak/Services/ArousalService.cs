@@ -1,8 +1,10 @@
 using CkCommons.Gui;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
+using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.PlayerClient;
+using GagSpeak.Services.Mediator;
 using GagSpeak.State.Caches;
 using GagSpeak.Utils;
 using GagspeakAPI.Attributes;
@@ -16,16 +18,19 @@ public sealed class ArousalService : IDisposable
 {
     private readonly ILogger<ArousalService> _logger;
     private static MainConfig _config = null!;
+    private readonly GagspeakMediator _mediator;
 
     private readonly CancellationTokenSource _timerCts = new();
     private Task? _timerTask;
     private DateTime _lastSave = DateTime.MinValue;
 
-    public ArousalService(ILogger<ArousalService> logger, MainConfig config)
+    public ArousalService(ILogger<ArousalService> logger, MainConfig config, GagspeakMediator mediator)
     {
         _logger = logger;
         _config = config;
+        _mediator = mediator;
         Arousal = config.Data.Arousal;
+        _lastArousal = Arousal;
         UpdateFinalCache();
         _timerTask = Task.Run(TimerTask, _timerCts.Token);
     }
@@ -70,6 +75,19 @@ public sealed class ArousalService : IDisposable
     private float _generationFrequency;
     private float _degenerationRate;
     private static float _pulsePhase;
+    private float _lastArousal;
+    // Arousal is changed from both the timer task and the framework thread.
+    private readonly object _arousalLock = new();
+
+    // Shown when rising into each stage, or when settling back down to Calm.
+    private static readonly string[] StageLines =
+    [
+        "You feel calm again.",
+        "You're starting to feel a little flustered...",
+        "Your face feels hot, it's getting hard to focus...",
+        "You're aroused, words are getting hard to find...",
+        "You're desperate, your heart is pounding!",
+    ];
 
     // Exposed Properties
     public static float StaticArousal { get; private set; } = 0f;
@@ -122,6 +140,16 @@ public sealed class ArousalService : IDisposable
         {
             _logger.LogWarning($"ArousalCache key ([{combinedKey}]) not found!");
             return false;
+        }
+    }
+
+    /// <summary> Adds <paramref name="amount"/>% arousal (negative to remove). </summary>
+    public void AddArousal(float amount)
+    {
+        lock (_arousalLock)
+        {
+            Arousal = Math.Clamp(Arousal + amount, 0f, AROUSAL_CAP);
+            PublishChange();
         }
     }
 
@@ -283,20 +311,40 @@ public sealed class ArousalService : IDisposable
     public void Update()
     {
         SaveArousal();
-        if (StaticArousal <= 0)
+        lock (_arousalLock)
         {
-            // Decay if nothing worn has an arousal strength.
-            Arousal = MathF.Max(0f, Arousal - _degenerationRate);
+            if (StaticArousal <= 0)
+            {
+                // Decay if nothing worn has an arousal strength.
+                Arousal = MathF.Max(0f, Arousal - _degenerationRate);
+            }
+            else
+            {
+                // Build towards the cap.
+                Arousal = Math.Clamp(Arousal + _generationRate - _degenerationRate, 0f, AROUSAL_CAP);
+                _logger.LogTrace($"Updated Arousal: {(float)Arousal} (Static: {StaticArousal})", LogFilter.Arousal);
+            }
+            PublishChange();
+        }
+    }
+
+    /// <summary> Publishes any change since the last publish, and announces stage changes. Call within <see cref="_arousalLock"/>. </summary>
+    private void PublishChange()
+    {
+        if (Arousal == _lastArousal)
             return;
+
+        var prevStage = ArousalEffects.StageIndex(_lastArousal / AROUSAL_CAP);
+        var stage = ArousalEffects.StageIndex(ArousalPercent);
+        // Stage lines describe the effects, so only announce them while Arousal Effects is enabled.
+        if (stage != prevStage && _config.Data.ArousalStageToasts && ClientData.Globals?.GlobalArousal == true)
+        {
+            var msg = stage > prevStage || stage == 0 ? StageLines[stage] : $"You're cooling down... ({ArousalEffects.Stages[stage]})";
+            _mediator.Publish(new NotificationMessage("Arousal", msg, NotificationType.Info));
         }
 
-        // Calculate the new arousal value.
-        float newArousal = Arousal + _generationRate - _degenerationRate;
-
-        // Clamp the new arousal value to the maximum cap.
-        Arousal = Math.Clamp(newArousal, 0f, AROUSAL_CAP);
-        // Log the current arousal state.
-        _logger.LogTrace($"Updated Arousal: {(float)Arousal} (Static: {StaticArousal})", LogFilter.Arousal);
+        _mediator.Publish(new ArousalChanged(_lastArousal, Arousal));
+        _lastArousal = Arousal;
     }
 
     /// <summary> Persists the current arousal at most once a minute. </summary>
@@ -342,7 +390,7 @@ public sealed class ArousalService : IDisposable
 #if DEBUG
         var arousal = Arousal;
         if (ImGui.SliderFloat("Current Arousal", ref arousal, 0f, AROUSAL_CAP, "%.1f", ImGuiSliderFlags.AlwaysClamp))
-            Arousal = arousal;
+            AddArousal(arousal - Arousal);
 #else
         ImGui.TextUnformatted($"Current Arousal: {Arousal:F2}");
 #endif

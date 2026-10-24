@@ -150,6 +150,9 @@ public class SettingsModulesHardcore
             DrawArousalToggle(GSLoc.Settings.Options.ArousalBlur, GSLoc.Settings.Options.ArousalBlurTT, false, _ => { }, true);
         }
 
+        DrawArousalToggle(GSLoc.Settings.Options.ArousalStageToasts, GSLoc.Settings.Options.ArousalStageToastsTT,
+            _config.Data.ArousalStageToasts, v => _config.Data.ArousalStageToasts = v, false);
+
         // The meter runs regardless of Arousal Effects, so the timings are always editable.
         var buildMinutes = _config.Data.ArousalBuildMinutes;
         ImGui.SetNextItemWidth(200f);
