@@ -18,6 +18,9 @@ public record EmoteDetected(ushort ID, nint CallerAddr, nint TargetAddr) : SameT
 /// Health Percent Triggers. Run on SameThreadMessage for pointer validity.
 public record HpMonitorTriggered(nint PlayerAddr, HealthPercentTrigger HpTrigger) : SameThreadMessage;
 
+// The arousal meter changed since the last arousal tick.
+public record ArousalChanged(float Previous, float Current) : MessageBase;
+
 // Could make a more generic method for Minigames, but for now just per-activity is fine.
 public record DeathrollMessage(string SenderNameWorld, int Roll, int RollCap) : MessageBase;
 public record DeathrollDiceMessage(string SenderNameWorld, SeString Msg) : MessageBase;

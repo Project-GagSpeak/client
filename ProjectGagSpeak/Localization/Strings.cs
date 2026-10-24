@@ -1134,6 +1134,8 @@ namespace GagSpeak.Localization
 
         public readonly string VibeStatusLabel = Loc.Localize("Preferences_VibeStatusLabel", "Vibe Status DTR Entry");
         public readonly string VibeStatusTT = Loc.Localize("Preferences_VibeStatusTT", "Displays a vibe icon when you have an actively vibrating sex toy.");
+        public readonly string ArousalDtrLabel = Loc.Localize("Preferences_ArousalDtrLabel", "Arousal DTR Entry");
+        public readonly string ArousalDtrTT = Loc.Localize("Preferences_ArousalDtrTT", "Displays your arousal meter and stage while it is above 0%.--SEP--Hover it to see which arousal effects are active.");
 
         public readonly string PrefThreeCharaAnonName = Loc.Localize("Preferences_ThreeCharaAnonName", "Display [Kinkster-XXX] over [Kinkster-XXXX] in Global Chat");
         public readonly string PrefThreeCharaAnonNameTT = Loc.Localize("Preferences_ThreeCharaAnonNameTT", "Displays the first three characters of a player's name instead of 4." +
@@ -1189,6 +1191,25 @@ namespace GagSpeak.Localization
 
         public readonly string GagGlamours = Loc.Localize("MainOptions_GagGlamours", "Gag Glamours");
         public readonly string GagGlamoursTT = Loc.Localize("MainOptions_GagGlamoursTT", "Allows Glamourer to apply gag glamour items from your Gag Storage.");
+
+        public readonly string GlobalArousal = Loc.Localize("MainOptions_GlobalArousal", "Arousal Effects");
+        public readonly string GlobalArousalTT = Loc.Localize("MainOptions_GlobalArousalTT", "Lets your arousal affect you with chat stutter, shortened messages, a screen blush, and slower GCDs. Arousal still builds and fades while this is off.--SEP--Can't be turned off while it's affecting you.");
+        public readonly string ArousalStutter = Loc.Localize("MainOptions_ArousalStutter", "Stutter");
+        public readonly string ArousalStutterTT = Loc.Localize("MainOptions_ArousalStutterTT", "Your chat messages stutter as arousal builds.--SEP--Can't be turned off while it's affecting you.");
+        public readonly string ArousalWordLimit = Loc.Localize("MainOptions_ArousalWordLimit", "Trailing Off");
+        public readonly string ArousalWordLimitTT = Loc.Localize("MainOptions_ArousalWordLimitTT", "At high arousal your chat messages get cut short and trail off.--SEP--Can't be turned off while it's affecting you.");
+        public readonly string ArousalBlush = Loc.Localize("MainOptions_ArousalBlush", "Screen Blush");
+        public readonly string ArousalBlushTT = Loc.Localize("MainOptions_ArousalBlushTT", "A pink blush creeps in from the edges of your screen, throbbing at very high arousal.--SEP--Can't be turned off while it's affecting you.");
+        public readonly string ArousalGcdDelay = Loc.Localize("MainOptions_ArousalGcdDelay", "Sluggish Actions");
+        public readonly string ArousalGcdDelayTT = Loc.Localize("MainOptions_ArousalGcdDelayTT", "At high arousal your combat actions take longer between uses.--SEP--Can't be turned off while it's affecting you.");
+        public readonly string ArousalStageToasts = Loc.Localize("MainOptions_ArousalStageToasts", "Stage Notifications");
+        public readonly string ArousalStageToastsTT = Loc.Localize("MainOptions_ArousalStageToastsTT", "Shows a notification whenever your arousal moves into a new stage.");
+        public readonly string ArousalBlur = Loc.Localize("MainOptions_ArousalBlur", "Blurred Vision");
+        public readonly string ArousalBlurTT = Loc.Localize("MainOptions_ArousalBlurTT", "Not available yet.");
+        public readonly string ArousalBuildTime = Loc.Localize("MainOptions_ArousalBuildTime", "Build-up Time");
+        public readonly string ArousalBuildTimeTT = Loc.Localize("MainOptions_ArousalBuildTimeTT", "How long a strong gag and strong restraint set take to fully arouse you. Stronger setups are faster, lighter ones slower.");
+        public readonly string ArousalDecayTime = Loc.Localize("MainOptions_ArousalDecayTime", "Calm-down Time");
+        public readonly string ArousalDecayTimeTT = Loc.Localize("MainOptions_ArousalDecayTimeTT", "How long it takes to fully calm down once you're no longer wearing anything arousing.");
 
         public readonly string GagPadlockTimer = Loc.Localize("MainOptions_GagPadlockTimer", "Expired Timer Gag Removal");
         public readonly string GagPadlockTimerTT = Loc.Localize("MainOptions_GagPadlockTimerTT", "Automatically removes locked gags when the timer expires.");

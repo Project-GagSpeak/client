@@ -340,10 +340,14 @@ public class ChatService : DisposableMediatorSubscriberBase
         SentMessage finalMessage;
         if ((_gags.ServerGagData?.IsGagged() ?? true) && (ClientData.Globals?.ChatGarblerActive ?? false))
         {
-            var garbledMsg = _garbler.GarbleMessage(messageDto.Message, true);
+            var garbledMsg = ArousalService.ApplyChatEffects(_garbler.GarbleMessage(messageDto.Message, true));
             // hacky, but just recreate the message dto with the garbler data replacing the original message
             // because we can't edit it after it's created
             finalMessage = messageDto with { Sender = MainHub.OwnUserData, Message = garbledMsg };
+        }
+        else if ((ClientData.Globals?.ChatGarblerActive ?? false) && ArousalService.HasChatEffects)
+        {
+            finalMessage = messageDto with { Message = ArousalService.ApplyChatEffects(messageDto.Message) };
         }
         else
         {
