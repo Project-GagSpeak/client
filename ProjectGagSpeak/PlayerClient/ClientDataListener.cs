@@ -83,6 +83,13 @@ public sealed class ClientDataListener : IDisposable
 
     }
 
+    // Movement states first (house -> cage), before the emote locks us in place.
+    private static readonly HcAttribute[] ResyncOrder =
+    [
+        HcAttribute.Confinement, HcAttribute.Imprisonment, HcAttribute.EmoteState, HcAttribute.Follow,
+        HcAttribute.HiddenChatBox, HcAttribute.HiddenChatInput, HcAttribute.BlockedChatInput,
+    ];
+
     // Only ever self-invoked, all handlers should process their own strings.
     public void ChangeAllClientGlobals(UserData enactor, GlobalPerms globals, HardcoreState hardcore)
     {
@@ -91,7 +98,7 @@ public sealed class ClientDataListener : IDisposable
         _data.SetGlobals(globals, hardcore);
         HandleGlobalPermChanges(enactor, prevGlobals, globals);
         // Resync Hardcore State Changes. (Skip UNKNOWN and HYPNO-EFFECT)
-        foreach (var attr in HcAttribute.Values.Skip(1).SkipLast(1))
+        foreach (var attr in ResyncOrder)
             HandleHardcoreStatusChange(new(hardcore.Enactor(attr)), attr, prevHardcore.IsEnabled(attr), hardcore.IsEnabled(attr));
     }
 

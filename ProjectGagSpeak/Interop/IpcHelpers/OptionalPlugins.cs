@@ -10,4 +10,5 @@ public enum OptionalPlugin
     Lifestream    = 5,
     Intiface      = 6,
     Sundouleia    = 7,
+    Vnavmesh      = 8,
 }
