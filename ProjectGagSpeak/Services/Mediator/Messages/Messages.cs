@@ -30,6 +30,7 @@ public record ConnectionKindChanged(ConnectionKind PrevState, ConnectionKind New
 // Remove later.
 public record OpenSettingsPluginInfoMessage(OptionalPlugin Plugin) : MessageBase;
 
+public record ConnectedHubChanged : MessageBase;
 public record ConnectedHubProfileChanged : MessageBase;
 
 /// <summary> Fires whenever the client is disconnected from the GagSpeak Hub. </summary>

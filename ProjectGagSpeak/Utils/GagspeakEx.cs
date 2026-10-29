@@ -30,7 +30,7 @@ public static class GagspeakEx
 
     public static bool HasValidSetup(this MainConfigData configuration)
         => configuration.AcknowledgementUnderstood;
-    public static bool HasValidSetup(this AccountStorage configuration)
+    public static bool HasValidSetup(this AccountConfigData configuration)
         => configuration.Profiles.Count > 0;
 
     public static string AsAnonKinkster(this string kinksterUid, bool isLegacy = true)

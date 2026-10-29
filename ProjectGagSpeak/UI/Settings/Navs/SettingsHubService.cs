@@ -101,7 +101,7 @@ public partial class SettingsHubService
         var current = ConnectionsConfig.CurrentHub;
 
         CkGui.FramedIconText(FAI.GlobeAsia);
-        if (ConnectionsConfig.MAIN_SERVER_URI == current.HubURI)
+        if (ConnectionsConfig.MAIN_SERVER_URI == current.HubURI || ConnectionsConfig.DEV_SERVER_URI == current.HubURI)
         {
             CkGui.TextFrameAlignedInline("Connected to");
             CkGui.ColorTextFrameAlignedInline(current.HubName, GsCol.LushPinkButton.Uint());
@@ -123,11 +123,12 @@ public partial class SettingsHubService
                 for (int i = 0; i < hubs.Count; i++)
                 {
                     var selected = hubs[i] == current;
-                    var isOfficial = hubs[i].HubURI == ConnectionsConfig.MAIN_SERVER_URI;
+                    var isOfficial = hubs[i].HubURI == ConnectionsConfig.MAIN_SERVER_URI || hubs[i].HubURI == ConnectionsConfig.DEV_SERVER_URI;
                     var displayString = isOfficial ? hubs[i].HubName : $"{hubs[i].HubName} ({hubs[i].HubURI})";
                     if (ImGui.Selectable(displayString, selected) && !selected)
                     {
                         _connections.SetHubIndex(i);
+                        _mediator.Publish(new ConnectedHubChanged());
                         UiService.SetUITask(async () => await _hub.Reconnect(DisconnectIntent.Reload).ConfigureAwait(false));
                     }
                 }

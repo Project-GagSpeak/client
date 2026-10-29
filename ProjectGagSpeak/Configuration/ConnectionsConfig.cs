@@ -27,6 +27,9 @@ public class ConnectionsConfig : IHybridSavable
     public const string MAIN_SERVER_NAME = "GagSpeak Main";
     public const string MAIN_SERVER_URI = "wss://gagspeak.kinkporium.studio";
 
+    public const string DEV_SERVER_NAME = "GagSpeak Dev";
+    public const string DEV_SERVER_URI = "wss://gagspeak-dev.kinkporium.studio";
+
     private static readonly List<ServerHubInfo> OfficialHubs =
     [
         new ServerHubInfo
@@ -34,13 +37,18 @@ public class ConnectionsConfig : IHybridSavable
             HubName = MAIN_SERVER_NAME,
             HubURI  = MAIN_SERVER_URI
         },
+        new ServerHubInfo
+        {
+            HubName = DEV_SERVER_NAME,
+            HubURI  = DEV_SERVER_URI
+        }
     ];
 
     private readonly ILogger<ConnectionsConfig> _logger;
     private readonly GagspeakMediator _mediator;
     private readonly HybridSaveService _saver;
     public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
-    public int ConfigVersion => 1;
+    public int ConfigVersion => 2;
     public int MaxBackups => 2;
     public HybridSaveType SaveType => HybridSaveType.Json;
     public string ToFilePath(GsFiles files) => files.ConnectionsConfig;
@@ -117,6 +125,12 @@ public class ConnectionsConfig : IHybridSavable
         _currentHubIdx = jObject["CurrentHubIdx"]?.Value<int>() ?? 0;
         _cachedHubs = jObject["ServerHubs"]?.ToObject<List<ServerHubInfo>>() ?? OfficialHubs;
 
+        if (version < 2)
+        {
+            // Append dev option
+            _cachedHubs = OfficialHubs;
+        }
+        
         // Validate hub index.
         if (_currentHubIdx < 0 || _currentHubIdx >= ServerHubs.Count)
         {
