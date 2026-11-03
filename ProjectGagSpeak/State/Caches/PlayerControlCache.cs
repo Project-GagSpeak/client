@@ -1,3 +1,4 @@
+using GagSpeak.PlayerControl;
 using Dalamud.Game.ClientState.Keys;
 using GagSpeak.GameInternals;
 using GagSpeak.PlayerClient;
@@ -38,8 +39,12 @@ public sealed class PlayerControlCache
         => _traits.GetSourceName(trait);
 
     // Accessors that retrieve under what conditions the respective hardcore attributes should be enabled with.
+    /// <summary> Locked Follow without a leash, where the follower can do nothing but follow. </summary>
+    private static bool StrictFollow
+        => ClientData.Hardcore.IsEnabled(HcAttribute.Follow) && Leash.Current is null;
+
     public bool BlockActions
-        => ClientData.Hardcore.IsEnabled(HcAttribute.Follow)
+        => StrictFollow
         || ClientData.Hardcore.IsEnabled(HcAttribute.EmoteState)
         || ClientData.Hardcore.IsEnabled(HcAttribute.Imprisonment)
         || _traits.FinalTraits.HasAny(Traits.Immobile)
@@ -66,8 +71,11 @@ public sealed class PlayerControlCache
         => ClientData.Hardcore.IsEnabled(HcAttribute.HiddenChatBox)
         || _activeTaskControl.HasAny(HcTaskControl.NoChatBoxView);
 
+    public bool BlockMounting
+        => ClientData.Hardcore.IsEnabled(HcAttribute.Follow) || Leash.DebugActive;
+
     public bool PreventUnfollowing
-        => ClientData.Hardcore.IsEnabled(HcAttribute.Follow)
+        => StrictFollow
         || _activeTaskControl.HasAny(HcTaskControl.MustFollow);
 
     public bool BlockRunning
@@ -78,8 +86,8 @@ public sealed class PlayerControlCache
             if (_activeTaskControl.HasAny(HcTaskControl.InLifestreamTask))
                 return false;
 
-            // Force while following.
-            if (ClientData.Hardcore.IsEnabled(HcAttribute.Follow))
+            // Force while following, unless leashed without forced walking.
+            if (ClientData.Hardcore.IsEnabled(HcAttribute.Follow) && Leash.Current is not { ForceWalk: false })
                 return true;
 
             // Force while hc task control says so.
@@ -107,7 +115,7 @@ public sealed class PlayerControlCache
         => _activeTaskControl.HasAny(HcTaskControl.InLifestreamTask);
 
     public bool BlockMovementKeys
-        => ClientData.Hardcore.IsEnabled(HcAttribute.Follow)
+        => StrictFollow
         || ClientData.Hardcore.IsEnabled(HcAttribute.EmoteState)
         || _activeTaskControl.HasAny(HcTaskControl.BlockMovementKeys)
         || _traits.FinalTraits.HasAny(Traits.Immobile);
@@ -118,7 +126,7 @@ public sealed class PlayerControlCache
         && !_activeTaskControl.HasAny(HcTaskControl.InRequiredTurnTask);
 
     public bool BlockAutoMove
-        => ClientData.Hardcore.IsEnabled(HcAttribute.Follow)
+        => StrictFollow
         || ClientData.Hardcore.IsEnabled(HcAttribute.EmoteState)
         || _activeTaskControl.HasAny(HcTaskControl.MustFollow | HcTaskControl.BlockMovementKeys)
         || _traits.FinalTraits.HasAny(Traits.Immobile);

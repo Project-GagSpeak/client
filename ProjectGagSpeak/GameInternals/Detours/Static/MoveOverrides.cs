@@ -44,6 +44,8 @@ public unsafe class MoveOverrides : IDisposable
     public Vector3 TargetPos;
     public Vector3 PrevPos;
     public float Proximity = 0.01f;
+    // How close FollowPath must pass a waypoint for it to count as reached.
+    private const float WaypointTolerance = 0.25f;
     public bool _legacyMode;
 
     // Progress tracking, so a caller can tell 'walking' apart from 'wedged against a wall'.
@@ -238,6 +240,50 @@ public unsafe class MoveOverrides : IDisposable
     }
 
     /// <summary>
+    ///   Walks the waypoints of <paramref name="path"/> in order, removing each as it is reached. Returns true once
+    ///   the last is within <paramref name="proximity"/>, and null after <paramref name="stallMs"/> without progress.
+    /// </summary>
+    public unsafe bool? FollowPath(List<Vector3> path, float proximity, int stallMs)
+    {
+        if (!PlayerData.Available)
+            return false;
+
+        // Measured along our movement since last frame, so waypoints are neither skipped nor cut early.
+        var cur = PlayerData.Position;
+        var prev = _trackingProgress ? PrevPos : cur;
+        while (path.Count > 1 && PassedWaypoint(path[0], prev, cur))
+            path.RemoveAt(0);
+
+        if (path.Count == 0)
+            return true;
+
+        var isLast = path.Count == 1;
+        if (MoveToPoint(path[0], isLast ? proximity : 0f) && isLast)
+        {
+            path.Clear();
+            return true;
+        }
+
+        return stallMs > 0 && StalledFor > stallMs ? null : false;
+    }
+
+    /// <summary>
+    ///   If moving from <paramref name="a"/> to <paramref name="b"/> passed within <see cref="WaypointTolerance"/> of
+    ///   <paramref name="waypoint"/> on the XZ plane. Waypoints over a yalm above or below don't count (a landing
+    ///   overhead), unless below us mid-jump.
+    /// </summary>
+    private static bool PassedWaypoint(Vector3 waypoint, Vector3 a, Vector3 b)
+    {
+        if (waypoint.Y - b.Y > 1f || b.Y - waypoint.Y > 1f && !PlayerData.IsJumping)
+            return false;
+
+        var ab = new Vector2(b.X - a.X, b.Z - a.Z);
+        var ap = new Vector2(waypoint.X - a.X, waypoint.Z - a.Z);
+        var t = ab.LengthSquared() > 0 ? Math.Clamp(Vector2.Dot(ap, ab) / ab.LengthSquared(), 0f, 1f) : 0f;
+        return Vector2.Distance(ap, ab * t) <= WaypointTolerance;
+    }
+
+    /// <summary>
     ///   Records whether we actually displaced this frame, and jumps to try shaking loose of
     ///   whatever we are caught on when we did not.
     /// </summary>
@@ -262,9 +308,9 @@ public unsafe class MoveOverrides : IDisposable
         var minSpeedAllowed = Control.Instance()->IsWalking ? 0.015f : 0.05f;
         if (Vector3.Distance(pos, PrevPos) >= minSpeedAllowed)
             _lastProgressTick = now;
-        // Something is potentially obstructing our movement. If we have slowed to a crawl and have
-        // not jumped recently, try jumping.
-        else if (AgentMap.Instance()->IsPlayerMoving && HcTaskManager.ElapsedTime > 500 && !PlayerData.IsJumping)
+        // Something is potentially obstructing our movement. If we have been crawling for a while (not one slow
+        // frame on a sharp turn) and have not jumped recently, try jumping.
+        else if (AgentMap.Instance()->IsPlayerMoving && now - _lastProgressTick > 500 && !PlayerData.IsJumping)
         {
             if (NodeThrottler.Throttle("HcTaskFunc.Jump", 1250))
             {

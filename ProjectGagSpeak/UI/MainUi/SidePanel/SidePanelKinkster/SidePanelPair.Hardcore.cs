@@ -40,8 +40,24 @@ public partial class SidePanelPair
         var followAllowed = k.PairPerms.AllowLockedFollowing && k.IsRendered && hc.CanChange(HcAttribute.Follow, MainHub.UID) && inFollowRange;
         var followTT = followEnabled ? $"Allow {dispName} to stop following you." : $"Force {dispName} to follow you.--NL----COL--Effect expires when idle for over 6 seconds.--COL--";
         DrawColoredExpander(InteractionType.LockedFollow, followIcon, followText, followEnabled, !followAllowed, followTT);
-        UniqueHcChild(InteractionType.LockedFollow, followEnabled, ImGui.GetFrameHeight(), () =>
+        UniqueHcChild(InteractionType.LockedFollow, followEnabled, CkStyle.TwoRowHeight(), () =>
         {
+            ImGui.Checkbox("Leash", ref cache.LeashMode);
+            CkGui.AttachTooltip($"Leash {dispName} instead: they can move and act freely within range, and are only " +
+                "pulled back to you once they stray past it.--NL--Unchecked, they can do nothing but follow you.");
+            using (ImRaii.Disabled(!cache.LeashMode))
+            {
+                const string walkText = "Force Walk";
+                var walkW = ImGui.GetFrameHeight() + ImGui.GetStyle().ItemInnerSpacing.X + ImGui.CalcTextSize(walkText).X;
+                ImUtf8.SameLineInner();
+                ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - walkW - ImGui.GetStyle().ItemInnerSpacing.X);
+                ImGui.SliderFloat("##LeashRange", ref cache.LeashRange, 2f, 20f, "%.1fy");
+                CkGui.AttachTooltip($"How far {dispName} can stray from you before being pulled back.");
+                ImUtf8.SameLineInner();
+                ImGui.Checkbox(walkText, ref cache.LeashForceWalk);
+                CkGui.AttachTooltip($"Force {dispName} to walk while leashed. Otherwise they may run.");
+            }
+
             if (ImGuiUtil.DrawDisabledButton("Enable Locked Follow", new Vector2(width, ImGui.GetFrameHeight()), string.Empty, !followAllowed))
                 cache.TryEnableHardcoreAction(HcAttribute.Follow);
             CkGui.AttachTooltip($"Force {dispName} to follow you! (--COL--{dispName} must be within 5 yalms--COL--)", ImGuiColors.ParsedPink);

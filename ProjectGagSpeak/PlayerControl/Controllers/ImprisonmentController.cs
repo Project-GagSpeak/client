@@ -10,6 +10,7 @@ namespace GagSpeak.Services.Controller;
 public class ImprisonmentController : DisposableMediatorSubscriberBase
 {
     private const string ReturnToCageName = "RETURN_TO_CAGE";
+    private const string DebugWalkToName = "DEBUG_WALK_TO";
     private const float ArrivalFactor = 0.75f;
     private const int StallTimeoutMs = 5000;
     private const int RetryCooldownMs = 15000;
@@ -17,13 +18,15 @@ public class ImprisonmentController : DisposableMediatorSubscriberBase
     private const float DivergenceMargin = 3f;
 
     private readonly HcTaskManager _hcTasks;
+    private readonly HousingNavmesh _navmesh;
     private float? _gaveUpAtDistance;
     private long _gaveUpAtTick;
 
     public ImprisonmentController(ILogger<ImprisonmentController> logger, GagspeakMediator mediator,
-        HcTaskManager hcTasks) : base(logger, mediator)
+        HcTaskManager hcTasks, HousingNavmesh navmesh) : base(logger, mediator)
     {
         _hcTasks = hcTasks;
+        _navmesh = navmesh;
 
         Mediator.Subscribe<HcStateCacheChanged>(this, _ => OnHcCacheStateChange());
         Mediator.Subscribe<FrameworkUpdateMessage>(this, _ => FrameworkUpdate());
@@ -118,7 +121,9 @@ public class ImprisonmentController : DisposableMediatorSubscriberBase
         // snapshot the cage, so a task outliving FullStopImprisonment can't retarget to the world origin.
         var origin = CageOrigin;
         var arrival = CageRadius * ArrivalFactor;
-        _hcTasks.InsertTask(() => ReturnToCage(origin, arrival), ReturnToCageName,
+        // Path around obstacles inside housing, straight line elsewhere.
+        var path = _navmesh.FindPath(PlayerData.Position, origin);
+        _hcTasks.InsertTask(() => ReturnToCage(origin, arrival, path), ReturnToCageName,
             HcTaskConfiguration.Default with { OnEnd = () => StaticDetours.MoveOverrides.Disable(), Flags = State.HcTaskControl.BlockMovementKeys });
     }
 
@@ -126,9 +131,11 @@ public class ImprisonmentController : DisposableMediatorSubscriberBase
     ///   Walks back toward the cage. Returns null once we have stopped making progress, which the
     ///   task manager treats as a failure rather than grinding against a wall until the timeout.
     /// </summary>
-    private bool? ReturnToCage(Vector3 origin, float arrival)
+    private bool? ReturnToCage(Vector3 origin, float arrival, List<Vector3>? path)
     {
-        var result = StaticDetours.MoveOverrides.MoveToPointOrFail(origin, arrival, StallTimeoutMs, DivergenceMargin);
+        var result = path is null
+            ? StaticDetours.MoveOverrides.MoveToPointOrFail(origin, arrival, StallTimeoutMs, DivergenceMargin)
+            : StaticDetours.MoveOverrides.FollowPath(path, arrival, StallTimeoutMs);
         if (result is not null)
             return result;
 
@@ -155,6 +162,21 @@ public class ImprisonmentController : DisposableMediatorSubscriberBase
             return true;
 
         return Environment.TickCount64 - _gaveUpAtTick >= RetryCooldownMs;
+    }
+
+    /// <summary> Debug: walks to <paramref name="point"/> over the housing navmesh, to test pathing solo. </summary>
+    public void DebugWalkTo(Vector3 point)
+    {
+        if (_navmesh.FindPath(PlayerData.Position, point) is not { } path)
+        {
+            Logger.LogWarning($"Debug walk: no navmesh path to {point:F2}.");
+            return;
+        }
+
+        Logger.LogDebug($"Debug walk: {path.Count} waypoints to {point:F2}.");
+        _hcTasks.RemoveIfPresent(DebugWalkToName);
+        _hcTasks.InsertTask(() => StaticDetours.MoveOverrides.FollowPath(path, 0.25f, StallTimeoutMs), DebugWalkToName,
+            HcTaskConfiguration.Default with { OnEnd = () => StaticDetours.MoveOverrides.Disable(), Flags = State.HcTaskControl.BlockMovementKeys });
     }
 
     public void FullStopImprisonment()
