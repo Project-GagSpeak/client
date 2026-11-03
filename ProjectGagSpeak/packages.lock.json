@@ -29,6 +29,24 @@
         "resolved": "1.2.39",
         "contentHash": "fcFN01tDTIQqDuTwr1jUQK/geofiwjG5DycJQOnC72i1SsLAk1ELe+apBOuZ11UMQG8YKFZG1FgvjZPbqHyatg=="
       },
+      "DotRecast.Detour": {
+        "type": "Direct",
+        "requested": "[2026.3.1, )",
+        "resolved": "2026.3.1",
+        "contentHash": "VGgJunTQepk9mpqAIIIWlxkr7Xf8kqUHu10ks+faXpFumc2nevoNmJ3NIlvFAPh/cPEPWOIMFmH/OFjDJ/LEZQ==",
+        "dependencies": {
+          "DotRecast.Core": "2026.3.1"
+        }
+      },
+      "DotRecast.Recast": {
+        "type": "Direct",
+        "requested": "[2026.3.1, )",
+        "resolved": "2026.3.1",
+        "contentHash": "DHSfwiKJ4T+e/YjGUMVbTabegcyjk/cEhI2edEn9uSAnRmB6mI78LNtP0cvHYiyShx1Csb26bTrmefUVt5kygA==",
+        "dependencies": {
+          "DotRecast.Core": "2026.3.1"
+        }
+      },
       "MessagePack": {
         "type": "Direct",
         "requested": "[2.5.307, )",
@@ -130,6 +148,11 @@
           "Microsoft.IdentityModel.JsonWebTokens": "7.5.2",
           "Microsoft.IdentityModel.Tokens": "7.5.2"
         }
+      },
+      "DotRecast.Core": {
+        "type": "Transitive",
+        "resolved": "2026.3.1",
+        "contentHash": "26TjlLSHnTY3qBu0AzuItDqV8Q57TNdSsi1GCnrmCZlwQmUaLScz/FlZUwSJcv9P0PPKiAClfgwCVk8p+Z2ccw=="
       },
       "FlatSharp.Compiler": {
         "type": "Transitive",
