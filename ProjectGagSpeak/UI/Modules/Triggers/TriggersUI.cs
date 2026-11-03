@@ -154,6 +154,7 @@ public class TriggersUI : WindowMediatorSubscriberBase
             case GagTrigger gt: _detections.DrawGag(gt); break;
             case SocialTrigger st: _detections.DrawSocial(st); break;
             case EmoteTrigger et: _detections.DrawEmote(et); break;
+            case ArousalTrigger at: _detections.DrawArousal(at); break;
         }
         
         ImGui.Spacing();
@@ -239,6 +240,7 @@ public class TriggersUI : WindowMediatorSubscriberBase
             case GagTrigger gt: _detections.DrawGagEditor(gt); break;
             case SocialTrigger st: _detections.DrawSocialEditor(st); break;
             case EmoteTrigger et: _detections.DrawEmoteEditor(et); break;
+            case ArousalTrigger at: _detections.DrawArousalEditor(at); break;
         }
 
         ImGui.Separator();
