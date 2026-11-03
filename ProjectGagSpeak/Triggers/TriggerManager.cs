@@ -269,6 +269,7 @@ public sealed class TriggerManager : DisposableMediatorSubscriberBase, IHybridSa
                         InvokableActionType.LociItem => triggerToken["InvokableAction"]?.ToObject<LociDataAction>() ?? new LociDataAction(),
                         InvokableActionType.ShockCollar => triggerToken["InvokableAction"]?.ToObject<PiShockAction>() ?? new PiShockAction(),
                         InvokableActionType.SexToy => triggerToken["InvokableAction"]?.ToObject<SexToyAction>() ?? new SexToyAction(),
+                        InvokableActionType.Arousal => triggerToken["InvokableAction"]?.ToObject<ArousalAction>() ?? new ArousalAction(),
                         _ => throw new Exception("Invalid InvokableAction Type")
                     };
 

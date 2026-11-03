@@ -170,6 +170,7 @@ public class TriggersUI : WindowMediatorSubscriberBase
             case LociDataAction ma: _reactions.DrawLociItem(ma); break;
             case PiShockAction ps: _reactions.DrawShock(ps); break;
             case SexToyAction sta: _reactions.DrawToy(sta); break;
+            case ArousalAction aa: _reactions.DrawArousal(aa); break;
         }
     }
 
@@ -258,6 +259,7 @@ public class TriggersUI : WindowMediatorSubscriberBase
                     InvokableActionType.Restraint => new RestraintAction(),
                     InvokableActionType.LociItem => new LociDataAction(),
                     InvokableActionType.ShockCollar => new PiShockAction(),
+                    InvokableActionType.Arousal => new ArousalAction(),
                     _ => new SexToyAction(),
                 };
             }
@@ -273,6 +275,7 @@ public class TriggersUI : WindowMediatorSubscriberBase
             case LociDataAction ma: _reactions.DrawLociItemEditor(ma); break;
             case PiShockAction ps: _reactions.DrawShockEditor(ps); break;
             case SexToyAction sta: _reactions.DrawToyEditor(sta); break;
+            case ArousalAction aa: _reactions.DrawArousalEditor(aa); break;
         }
     }
 }
