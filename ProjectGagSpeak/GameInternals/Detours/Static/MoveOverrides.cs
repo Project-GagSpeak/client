@@ -51,6 +51,10 @@ public unsafe class MoveOverrides : IDisposable
     // Progress tracking, so a caller can tell 'walking' apart from 'wedged against a wall'.
     private bool _trackingProgress;
     private long _lastProgressTick;
+    // Progress means moving ProgressDistance from here. Measured against this, not the last frame, so frame rate
+    // doesn't matter.
+    private Vector3 _progressAnchor;
+    private const float ProgressDistance = 0.25f;
     // Closest we have come to the target so far, to catch traveling confidently the wrong way.
     private float _closestDistanceXZ;
     private float _currentDistanceXZ;
@@ -181,6 +185,7 @@ public unsafe class MoveOverrides : IDisposable
         PrevPos = Vector3.Zero;
         _trackingProgress = false;
         _lastProgressTick = 0;
+        _progressAnchor = Vector3.Zero;
         _closestDistanceXZ = 0f;
         _currentDistanceXZ = 0f;
     }
@@ -188,7 +193,8 @@ public unsafe class MoveOverrides : IDisposable
     // a version of MoveToNode but for position.
     // returns true when it has reached the point within the specified proximity.
     // recommended to call disable after it returns true.
-    public unsafe bool MoveToPoint(Vector3 point, float proximity = 0.01f)
+    // turnCamera points the camera along the way. Standard movement needs it, so only Legacy can skip it.
+    public unsafe bool MoveToPoint(Vector3 point, float proximity = 0.01f, bool turnCamera = true)
     {
         if (!PlayerData.Available)
         {
@@ -210,7 +216,7 @@ public unsafe class MoveOverrides : IDisposable
 
         // otherwise, movement towards the cage origin.
         OverrideMoveInput = true;
-        OverrideCamera = true;
+        OverrideCamera = turnCamera || !_legacyMode;
         SpeedH = SpeedV = 360.Degrees();
         DesiredAzimuth = AzimuthForLook(Angle.FromDirectionXZ(TargetPos - PlayerData.Position));
         DesiredAltitude = -30.Degrees();
@@ -243,7 +249,7 @@ public unsafe class MoveOverrides : IDisposable
     ///   Walks the waypoints of <paramref name="path"/> in order, removing each as it is reached. Returns true once
     ///   the last is within <paramref name="proximity"/>, and null after <paramref name="stallMs"/> without progress.
     /// </summary>
-    public unsafe bool? FollowPath(List<Vector3> path, float proximity, int stallMs)
+    public unsafe bool? FollowPath(List<Vector3> path, float proximity, int stallMs, bool turnCamera = true)
     {
         if (!PlayerData.Available)
             return false;
@@ -258,7 +264,7 @@ public unsafe class MoveOverrides : IDisposable
             return true;
 
         var isLast = path.Count == 1;
-        if (MoveToPoint(path[0], isLast ? proximity : 0f) && isLast)
+        if (MoveToPoint(path[0], isLast ? proximity : 0f, turnCamera) && isLast)
         {
             path.Clear();
             return true;
@@ -284,8 +290,8 @@ public unsafe class MoveOverrides : IDisposable
     }
 
     /// <summary>
-    ///   Records whether we actually displaced this frame, and jumps to try shaking loose of
-    ///   whatever we are caught on when we did not.
+    ///   Records whether we are making progress, and jumps to try shaking loose of whatever we are
+    ///   caught on when we are not.
     /// </summary>
     private unsafe void TrackProgress(float distanceXZ)
     {
@@ -297,6 +303,7 @@ public unsafe class MoveOverrides : IDisposable
         {
             _trackingProgress = true;
             _lastProgressTick = now;
+            _progressAnchor = pos;
             _closestDistanceXZ = distanceXZ;
             PrevPos = pos;
             return;
@@ -305,11 +312,13 @@ public unsafe class MoveOverrides : IDisposable
         if (distanceXZ < _closestDistanceXZ)
             _closestDistanceXZ = distanceXZ;
 
-        var minSpeedAllowed = Control.Instance()->IsWalking ? 0.015f : 0.05f;
-        if (Vector3.Distance(pos, PrevPos) >= minSpeedAllowed)
+        if (Vector3.Distance(pos, _progressAnchor) >= ProgressDistance)
+        {
             _lastProgressTick = now;
-        // Something is potentially obstructing our movement. If we have been crawling for a while (not one slow
-        // frame on a sharp turn) and have not jumped recently, try jumping.
+            _progressAnchor = pos;
+        }
+        // Something is potentially obstructing our movement. If we have been crawling for a while and have
+        // not jumped recently, try jumping.
         else if (AgentMap.Instance()->IsPlayerMoving && now - _lastProgressTick > 500 && !PlayerData.IsJumping)
         {
             if (NodeThrottler.Throttle("HcTaskFunc.Jump", 1250))
