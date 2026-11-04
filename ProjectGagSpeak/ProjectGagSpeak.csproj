@@ -92,6 +92,12 @@
     <ItemGroup>
       <Folder Include="PlayerKinkster\Data\" />
     </ItemGroup>
+
+    <!-- The housing navmesh is private drop-in code. With Private/HousingNavmesh.cs present, use it over the stub. -->
+    <ItemGroup Condition="Exists('Private/HousingNavmesh.cs')">
+        <Compile Remove="PlayerControl/Utils/HousingNavmesh.Stub.cs" />
+    </ItemGroup>
+
 </Project>
 
 
