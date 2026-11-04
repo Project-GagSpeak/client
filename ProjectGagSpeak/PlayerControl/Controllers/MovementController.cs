@@ -241,7 +241,7 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
     ///   Walks toward <paramref name="goal"/>, re-pathing as it moves, until within <paramref name="proximity"/>.
     ///   Without a navmesh path, walks straight there only if <paramref name="straightFallback"/>.
     /// </summary>
-    private void WalkToward(Vector3 goal, float proximity, bool straightFallback)
+    private void WalkToward(Vector3 goal, float proximity, bool straightFallback, bool turnCamera = true)
     {
         var now = Environment.TickCount64;
         if (now >= _nextRepath && (_followPath is null || Vector3.Distance(goal, _followGoal) > RepathDistance))
@@ -251,7 +251,7 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
             _followPath = _navmesh.FindPath(PlayerData.Position, goal) ?? (straightFallback ? [goal] : null);
         }
 
-        if (_followPath is not null && StaticDetours.MoveOverrides.FollowPath(_followPath, proximity, 0) is true)
+        if (_followPath is not null && StaticDetours.MoveOverrides.FollowPath(_followPath, proximity, 0, turnCamera) is true)
             StopWalking();
     }
 
@@ -295,7 +295,7 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
         if (distance <= (_followPath is null ? _leash.Range : release))
             StopWalking();
         else
-            WalkToward(leaderPos, release, true);
+            WalkToward(leaderPos, release, true, false); // keep the player's camera (Legacy movement only).
     }
 
     /// <summary> Debug: navmesh-follow the current target without Locked Follow, to test the follow solo. </summary>
