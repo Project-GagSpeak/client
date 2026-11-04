@@ -251,7 +251,7 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
         else if (CkGui.IconTextButton(FAI.Link, "Leash To Target", disabled: target is null || _movement.Leashed))
         {
             var leader = target!;
-            _movement.StartLeash(new(_leashRange, _leashForceWalk), () => leader.IsValid() ? leader.Position : null);
+            _movement.StartLeash(new(_leashRange, _leashForceWalk), () => leader.IsValid() ? leader : null);
             Leash.DebugActive = true;
         }
 

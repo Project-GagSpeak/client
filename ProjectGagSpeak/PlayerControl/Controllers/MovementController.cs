@@ -1,5 +1,7 @@
 using CkCommons;
 using Dalamud.Game.ClientState.Conditions;
+using Dalamud.Game.ClientState.Objects.Enums;
+using Dalamud.Game.ClientState.Objects.Types;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using GagSpeak.GameInternals.Detours;
 using GagSpeak.Interop.Helpers;
@@ -25,6 +27,8 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
     private const float RepathDistance = 1f; // re-path once the goal has moved this far.
     private const int RepathIntervalMs = 500;
     private const float LeashReleaseFactor = 0.75f; // pull back to this fraction of the range before letting go.
+    private const float ZoneLineOvershoot = 3f; // walk this far past where the leader vanished.
+    private const float UsedNearLastSeen = 6f; // vanishing this close to their target means they used it.
 
     private readonly record struct MoveState(bool MustWalk, bool WasWalking);
 
@@ -45,8 +49,12 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
     private Vector3 _followGoal;
     private long _nextRepath;
     private bool _debugFollow;
-    private Func<Vector3?>? _leashLeader;
+    private Func<IGameObject?>? _leashLeader;
     private Leash _leash;
+    private Vector3? _leaderLastSeen; // leash anchor while the leader is out of sight.
+    private Vector2 _leaderHeading; // XZ direction the leader last moved.
+    private bool _pastLastSeen; // done following them out, now just holding.
+    private ulong? _leaderUsed; // last door, aetheryte or npc the leader targeted.
 
     public MovementController(ILogger<MovementController> logger, GagspeakMediator mediator,
         PlayerControlCache cache, HcTaskManager hcTasks, MovementDetours detours, HousingNavmesh navmesh)
@@ -57,7 +65,7 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
         _detours = detours;
         _navmesh = navmesh;
         _timeoutTracker.Stop();
-        Mediator.Subscribe<TerritoryChanged>(this, _ => EnsureConfinement());
+        Mediator.Subscribe<TerritoryChanged>(this, _ => OnTerritoryChanged());
         Mediator.Subscribe<HcStateCacheChanged>(this, _ => UpdateHardcoreStatus());
         Mediator.Subscribe<FrameworkUpdateMessage>(this, _ => FrameworkUpdate());
         Svc.Condition.ConditionChange += OnConditionChange;
@@ -67,6 +75,12 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
     {
         Svc.Condition.ConditionChange -= OnConditionChange;
         base.Dispose();
+    }
+
+    private void OnTerritoryChanged()
+    {
+        ForgetLeader();
+        EnsureConfinement();
     }
 
     private void OnConditionChange(ConditionFlag flag, bool value)
@@ -265,8 +279,8 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
 
     public bool Leashed => _leashLeader is not null;
 
-    /// <summary> <paramref name="leader"/> gives the leader's position, or null while they are not around. </summary>
-    public void StartLeash(Leash leash, Func<Vector3?> leader)
+    /// <summary> <paramref name="leader"/> gives the leader, or null while they are not around. </summary>
+    public void StartLeash(Leash leash, Func<IGameObject?> leader)
     {
         _leash = leash;
         _leashLeader = leader;
@@ -275,19 +289,31 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
     public void StopLeash()
     {
         _leashLeader = null;
+        ForgetLeader();
         Leash.DebugActive = false;
         StopWalking();
         _nextRepath = 0;
     }
 
-    /// <summary> Walks us back toward the leader once past the leash range. Rests while riding pillion. </summary>
+    /// <summary>
+    ///   Pulls us back toward the leader once past the leash range, following them through zone lines when they
+    ///   vanish. Rests while riding pillion.
+    /// </summary>
     private void UpdateLeash()
     {
-        if (_leashLeader?.Invoke() is not { } leaderPos || !PlayerData.Available || Svc.Condition[ConditionFlag.RidingPillion])
+        if (!PlayerData.Available || Svc.Condition[ConditionFlag.RidingPillion])
         {
             StopWalking();
             return;
         }
+
+        if (_leashLeader?.Invoke() is { } leader)
+            TrackLeader(leader);
+        else if (_leaderLastSeen is { } lastSeen && !_pastLastSeen && !FollowLeaderOut(lastSeen))
+            return;
+
+        if (_leaderLastSeen is not { } leaderPos)
+            return;
 
         // Start pulling past the range, stop once well inside it.
         var distance = PlayerData.DistanceTo(leaderPos);
@@ -296,6 +322,46 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
             StopWalking();
         else
             WalkToward(leaderPos, release, true, false); // keep the player's camera (Legacy movement only).
+    }
+
+    /// <summary> Records the leader's position, heading and interactable target. </summary>
+    private void TrackLeader(IGameObject leader)
+    {
+        if (_leaderLastSeen is { } prev && new Vector2(leader.Position.X - prev.X, leader.Position.Z - prev.Z) is { } moved && moved.Length() > 0.05f)
+            _leaderHeading = Vector2.Normalize(moved);
+        if (leader.TargetObject is { ObjectKind: ObjectKind.EventObj or ObjectKind.Aetheryte or ObjectKind.EventNpc } used)
+            _leaderUsed = used.GameObjectId;
+        _leaderLastSeen = leader.Position;
+        _pastLastSeen = false;
+    }
+
+    /// <summary> Follows the vanished leader out, then holds the leash. Returns false while still walking. </summary>
+    private bool FollowLeaderOut(Vector3 lastSeen)
+    {
+        // They used something to leave. Hold the leash there so the player can use it too.
+        if (_leaderUsed is { } id && Svc.Objects.SearchById(id) is { } used && Vector3.Distance(used.Position, lastSeen) <= UsedNearLastSeen)
+            _leaderLastSeen = used.Position;
+        else
+        {
+            // They vanish just short of a zone line, so walk on past it. Give up if a wall is in the way.
+            var goal = lastSeen + new Vector3(_leaderHeading.X, 0, _leaderHeading.Y) * ZoneLineOvershoot;
+            if (PlayerData.DistanceTo(new Vector2(goal.X, goal.Z)) > 0.25f && StaticDetours.MoveOverrides.StalledFor <= 1500)
+            {
+                WalkToward(goal, 0.25f, true, false);
+                return false;
+            }
+            StopWalking();
+        }
+
+        _pastLastSeen = true;
+        return true;
+    }
+
+    private void ForgetLeader()
+    {
+        _leaderLastSeen = null;
+        _pastLastSeen = false;
+        _leaderUsed = null;
     }
 
     /// <summary> Debug: navmesh-follow the current target without Locked Follow, to test the follow solo. </summary>

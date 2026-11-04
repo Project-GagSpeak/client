@@ -91,7 +91,7 @@ public class PlayerCtrlHandler
         if (Leash.Current is { } leash)
         {
             _logger.LogInformation($"[{kinkster.GetNickAliasOrUid()}] Leashed you to them ({leash.Range}y{(leash.ForceWalk ? ", walking" : string.Empty)})!", LogFilter.HardcoreMovement);
-            _movement.StartLeash(leash, () => kinkster.IsRendered ? kinkster.PlayerPosition : null);
+            _movement.StartLeash(leash, () => kinkster.IsRendered ? Svc.Objects.CreateObjectReference(kinkster.PlayerAddress) : null);
             _mediator.Publish(new HcStateCacheChanged());
             GagspeakEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HcAttribute.Follow, true, enactor, MainHub.UID);
             return;
