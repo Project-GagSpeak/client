@@ -106,7 +106,7 @@ public class PlayerCtrlHandler
             .Add(new HardcoreTask(() => GameConfig.UiControl.Set("MoveMode", (uint)MovementMode.Legacy)))
             .Add(new HardcoreTask(_movement.RestartTimeoutTracker))
             .Add(new HardcoreTask(() => HcCommonTaskFuncs.TargetNode(() => kinkster.PlayerAddress)))
-            // Inside housing the navmesh does the following, so only /follow without it.
+            // With a navmesh we do the following, so /follow only without one.
             .Add(new HardcoreTask(() => _movement.UseNavFollow ? true : HcTaskUtils.FollowTarget()))
             .Add(new HardcoreTask(() => _mediator.Publish(new HcStateCacheChanged())))
             .Enqueue();

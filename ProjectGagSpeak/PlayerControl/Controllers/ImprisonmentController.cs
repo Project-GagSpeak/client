@@ -121,7 +121,7 @@ public class ImprisonmentController : DisposableMediatorSubscriberBase
         // snapshot the cage, so a task outliving FullStopImprisonment can't retarget to the world origin.
         var origin = CageOrigin;
         var arrival = CageRadius * ArrivalFactor;
-        // Path around obstacles inside housing, straight line elsewhere.
+        // Path around obstacles, or a straight line where the navmesh has no path.
         var path = _navmesh.FindPath(PlayerData.Position, origin);
         _hcTasks.InsertTask(() => ReturnToCage(origin, arrival, path), ReturnToCageName,
             HcTaskConfiguration.Default with { OnEnd = () => StaticDetours.MoveOverrides.Disable(), Flags = State.HcTaskControl.BlockMovementKeys });
@@ -164,7 +164,7 @@ public class ImprisonmentController : DisposableMediatorSubscriberBase
         return Environment.TickCount64 - _gaveUpAtTick >= RetryCooldownMs;
     }
 
-    /// <summary> Debug: walks to <paramref name="point"/> over the housing navmesh, to test pathing solo. </summary>
+    /// <summary> Debug: walks to <paramref name="point"/> over the navmesh, to test pathing solo. </summary>
     public void DebugWalkTo(Vector3 point)
     {
         if (_navmesh.FindPath(PlayerData.Position, point) is not { } path)

@@ -225,7 +225,7 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///   Keeps within <see cref="FollowDistance"/> of the target over the housing navmesh. Hands back to /follow
+    ///   Keeps within <see cref="FollowDistance"/> of the target over the navmesh. Hands back to /follow
     ///   once the mesh is gone.
     /// </summary>
     private void UpdateNavFollow()
@@ -248,21 +248,21 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
         if (PlayerData.DistanceTo(target.Position) <= FollowDistance)
             StopWalking();
         else
-            WalkToward(target.Position, FollowDistance, false);
+            WalkToward(target.Position, FollowDistance);
     }
 
     /// <summary>
     ///   Walks toward <paramref name="goal"/>, re-pathing as it moves, until within <paramref name="proximity"/>.
-    ///   Without a navmesh path, walks straight there only if <paramref name="straightFallback"/>.
+    ///   Walks straight where the navmesh has no path, e.g. outside the area it covers.
     /// </summary>
-    private void WalkToward(Vector3 goal, float proximity, bool straightFallback, bool turnCamera = true)
+    private void WalkToward(Vector3 goal, float proximity, bool turnCamera = true)
     {
         var now = Environment.TickCount64;
         if (now >= _nextRepath && (_followPath is null || Vector3.Distance(goal, _followGoal) > RepathDistance))
         {
             _nextRepath = now + RepathIntervalMs;
             _followGoal = goal;
-            _followPath = _navmesh.FindPath(PlayerData.Position, goal) ?? (straightFallback ? [goal] : null);
+            _followPath = _navmesh.FindPath(PlayerData.Position, goal) ?? [goal];
         }
 
         if (_followPath is not null && StaticDetours.MoveOverrides.FollowPath(_followPath, proximity, 0, turnCamera) is true)
@@ -321,7 +321,7 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
         if (distance <= (_followPath is null ? _leash.Range : release))
             StopWalking();
         else
-            WalkToward(leaderPos, release, true, false); // keep the player's camera (Legacy movement only).
+            WalkToward(leaderPos, release, false); // keep the player's camera (Legacy movement only).
     }
 
     /// <summary> Records the leader's position, heading and interactable target. </summary>
@@ -347,7 +347,7 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
             var goal = lastSeen + new Vector3(_leaderHeading.X, 0, _leaderHeading.Y) * ZoneLineOvershoot;
             if (PlayerData.DistanceTo(new Vector2(goal.X, goal.Z)) > 0.25f && StaticDetours.MoveOverrides.StalledFor <= 1500)
             {
-                WalkToward(goal, 0.25f, true, false);
+                WalkToward(goal, 0.25f, false);
                 return false;
             }
             StopWalking();

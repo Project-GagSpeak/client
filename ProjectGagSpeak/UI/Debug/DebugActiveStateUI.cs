@@ -219,7 +219,7 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
 
     private void DrawPathfinderTest()
     {
-        ImGui.Text($"Housing Navmesh: {(_navmesh.Ready ? "Ready" : "Not Built")}");
+        ImGui.Text($"Navmesh: {(_navmesh.Ready ? "Ready" : "Not Built")}");
 
         // Walk to a saved point.
         ImGui.Text(_navPoint is { } point ? $"Nav Point: {point:F2}" : "Nav Point: None");

@@ -69,7 +69,7 @@
         <!--For handling debouncing inputs to send vibrations to connected devices, for stablizing overload (might not need this anymore we will see) -->
         <PackageReference Include="DebounceThrottle" Version="3.0.1" />
 
-        <!-- Navmesh building and pathing for housing interiors. -->
+        <!-- Navmesh building and pathing. -->
         <PackageReference Include="DotRecast.Recast" Version="2026.3.1" />
         <PackageReference Include="DotRecast.Detour" Version="2026.3.1" />
 
@@ -93,7 +93,6 @@
       <Folder Include="PlayerKinkster\Data\" />
     </ItemGroup>
 
-    <!-- The housing navmesh is private drop-in code. With Private/HousingNavmesh.cs present, use it over the stub. -->
     <ItemGroup Condition="Exists('Private/HousingNavmesh.cs')">
         <Compile Remove="PlayerControl/Utils/HousingNavmesh.Stub.cs" />
     </ItemGroup>
