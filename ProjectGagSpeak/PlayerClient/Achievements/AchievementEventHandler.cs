@@ -1137,17 +1137,17 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
                 break;
 
             case 105: // Stroke
-                if (callerObj->ObjectIndex is 0 && targetObj->ObjectIndex is 0)
+                if (callerObj->ObjectIndex is 0 && targetObj != null && targetObj->ObjectIndex is 0)
                     (ClientAchievements.SaveData[Achievements.ProlificPetter.Id] as ConditionalAchievement)?.CheckCompletion();
                 break;
 
             case 111: // Slap
-                if (callerObj->ObjectIndex is not 0 && targetObj->ObjectIndex is 0)
+                if (callerObj->ObjectIndex is not 0 && targetObj != null && targetObj->ObjectIndex is 0)
                     (ClientAchievements.SaveData[Achievements.ICantBelieveYouveDoneThis.Id] as ConditionalAchievement)?.CheckCompletion();
                 break;
 
             case 146: //Dote
-                if (callerObj->ObjectIndex is 0 && targetObj->ObjectIndex is not 0)
+                if (callerObj->ObjectIndex is 0 && targetObj != null && targetObj->ObjectIndex is not 0)
                     (ClientAchievements.SaveData[Achievements.WithAKissGoodbye.Id] as ConditionalAchievement)?.CheckCompletion();
                 break;
 
@@ -1156,7 +1156,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
                 {
                     (ClientAchievements.SaveData[Achievements.QuietNowDear.Id] as ConditionalAchievement)?.CheckCompletion();
                 }
-                else if (callerObj->ObjectIndex is not 0 && targetObj->ObjectIndex is 0)
+                else if (callerObj->ObjectIndex is not 0 && targetObj != null && targetObj->ObjectIndex is 0)
                 {
                     (ClientAchievements.SaveData[Achievements.SilenceOfShame.Id] as ConditionalAchievement)?.CheckCompletion();
                 }

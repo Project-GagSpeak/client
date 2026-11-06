@@ -151,6 +151,10 @@ public sealed class AutoUnlockService : BackgroundService
 
         Svc.Framework.RunOnFrameworkThread(() =>
         {
+            // No local player while zoning.
+            if (!PlayerData.Available)
+                return;
+
             var isDead = PlayerData.Health is 0;
             if (isDead && !_clientWasDead)
                 GagspeakEventManager.AchievementEvent(UnlocksEvent.ClientSlain);
