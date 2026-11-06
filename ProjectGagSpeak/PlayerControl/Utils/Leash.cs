@@ -14,8 +14,8 @@ public readonly record struct Leash(float Range, bool ForceWalk)
     /// <summary> Our own Locked Follow's leash, or null if it is a regular Locked Follow (or none at all). </summary>
     public static Leash? Current => Parse(ClientData.Hardcore?.LockedFollowing);
 
-    /// <summary> Debug: set while the solo debug leash runs, so its mount block applies. Cleared by StopLeash. </summary>
-    public static bool DebugActive;
+    /// <summary> Debug: the running solo debug leash, so its mount block and forced walking apply. Cleared by StopLeash. </summary>
+    public static Leash? Debug;
 
     public string ToTag()
         => $"{Tag}{Range.ToString("0.#", CultureInfo.InvariantCulture)}{(ForceWalk ? ",walk" : string.Empty)}";

@@ -243,7 +243,7 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
             _movement.DebugFollow = true;
 
         ImGui.SameLine();
-        if (_movement.Leashed && Leash.DebugActive)
+        if (_movement.Leashed && Leash.Debug is not null)
         {
             if (CkGui.IconTextButton(FAI.Stop, "Stop Leash"))
                 _movement.StopLeash();
@@ -251,8 +251,8 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
         else if (CkGui.IconTextButton(FAI.Link, "Leash To Target", disabled: target is null || _movement.Leashed))
         {
             var leader = target!;
-            _movement.StartLeash(new(_leashRange, _leashForceWalk), () => leader.IsValid() ? leader : null);
-            Leash.DebugActive = true;
+            Leash.Debug = new(_leashRange, _leashForceWalk);
+            _movement.StartLeash(Leash.Debug.Value, () => leader.IsValid() ? leader : null);
         }
 
         ImGui.SetNextItemWidth(150f);

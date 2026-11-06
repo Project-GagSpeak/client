@@ -284,15 +284,17 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
     {
         _leash = leash;
         _leashLeader = leader;
+        UpdateHardcoreStatus();
     }
 
     public void StopLeash()
     {
         _leashLeader = null;
         ForgetLeader();
-        Leash.DebugActive = false;
+        Leash.Debug = null;
         StopWalking();
         _nextRepath = 0;
+        UpdateHardcoreStatus();
     }
 
     /// <summary>

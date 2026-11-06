@@ -72,7 +72,7 @@ public sealed class PlayerControlCache
         || _activeTaskControl.HasAny(HcTaskControl.NoChatBoxView);
 
     public bool BlockMounting
-        => ClientData.Hardcore.IsEnabled(HcAttribute.Follow) || Leash.DebugActive;
+        => ClientData.Hardcore.IsEnabled(HcAttribute.Follow) || Leash.Debug is not null;
 
     public bool PreventUnfollowing
         => StrictFollow
@@ -86,8 +86,8 @@ public sealed class PlayerControlCache
             if (_activeTaskControl.HasAny(HcTaskControl.InLifestreamTask))
                 return false;
 
-            // Force while following, unless leashed without forced walking.
-            if (ClientData.Hardcore.IsEnabled(HcAttribute.Follow) && Leash.Current is not { ForceWalk: false })
+            // Force while following, unless leashed without forced walking (the debug leash included).
+            if ((ClientData.Hardcore.IsEnabled(HcAttribute.Follow) && Leash.Current is not { ForceWalk: false }) || Leash.Debug is { ForceWalk: true })
                 return true;
 
             // Force while hc task control says so.
