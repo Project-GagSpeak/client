@@ -347,7 +347,7 @@ public class MainUI : WindowMediatorSubscriberBase
             }
         }
         var ttMsg = MainHub.IsConnected ? $"--COL--[Connected]--COL----NL--Normal/Default connection with the server." : $"--COL--[Disconnected]--COL----NL--Disconnected from Servers.";
-        CkGui.AttachTooltip(ttMsg);
+        CkGui.AttachTooltip(ttMsg, ImGuiColors.DalamudOrange);
         _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ConnectionState, LastPos, LastSize);
 
         winPtr.DrawList.PopClipRect();

@@ -322,7 +322,7 @@ public partial class MainHub
         if (!_accounts.CharaIsAttached())
         {
             Logger.LogInformation("A Valid secret key entry was not found for the character.", LogFilter.MainHub);
-            ServerStatus = ServerState.NoSecretKey;
+            ServerStatus = ServerState.Unattached;
             return false;
         }
 
@@ -330,6 +330,7 @@ public partial class MainHub
         if (_connections.ConnectionState is ConnectionKind.FullPause)
         {
             Logger.LogDebug("You have your connection to server paused. Stopping any attempt to connect!", LogFilter.MainHub);
+            ServerStatus = ServerState.Disconnected;
             return false;
         }
 
