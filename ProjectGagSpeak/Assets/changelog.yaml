@@ -3,6 +3,27 @@ tagline: "GagSpeak 2.2 - The Chat Update"
 subline: "150+ new emotes, GIF Support, stickers, vanity names, name colors, and more."
 changelog:
 
+  - version: v2.2.4.0
+    date: "November 7th, 2026"
+    title: "Achievement & Account Fixes"
+    headerMessage: ""
+    segments:
+      - icon: "UserCircle"
+        title: "Accounts"
+        accent: "Yellow"
+        bullets:
+          - text: "Account Profiles correctly remove the profile you ask it to, instead of the profile you are logged in with."
+            isImportant: true
+      
+      - icon: "Bug"
+        title: "Bug Fixes"
+        accent: "Red"
+        bullets:
+          - text: "Fixed errors being thrown when using some emotes and changing zones"
+            contributor: "AzureRavie"
+          - text: "Fixed timed achievements showing the unlocked notification even if they are already unlocked."
+            contributor: "AzureRavie"    
+
   - version: v2.2.3.0
     date: "October 23rd, 2026"
     title: "More Polishing, yippee"
