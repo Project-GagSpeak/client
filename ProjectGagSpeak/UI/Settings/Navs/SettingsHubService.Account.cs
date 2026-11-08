@@ -13,6 +13,8 @@ using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
+using GagspeakAPI.Hub;
+using GagspeakAPI.User;
 using OtterGui.Text;
 using OtterGuiInternal;
 
@@ -443,23 +445,26 @@ public partial class SettingsHubService
     {
         try
         {
-            if (MainHub.ServerStatus is ServerState.Connected or ServerState.ConnectedDataSynced)
-            {
-                _logger.LogInformation("Attempting to delete Account from Server.");
-                await _hub.UserDelete();
-            }
-            else
-            {
+            if (MainHub.ServerStatus is not (ServerState.Connected or ServerState.ConnectedDataSynced))
                 throw new InvalidOperationException("Not connected to the server.");
+
+            // Attempt deletion
+            _logger.LogInformation($"Attempting to delete Account profile [{profile.UserUID}] from Server.");
+            var hubResponse = await _hub.UserDelete(new(new(profile.UserUID))).ConfigureAwait(false);
+            if (hubResponse.ErrorCode is not GagSpeakApiEc.Success)
+            {
+                _logger.LogWarning($"Server deletion failed for Account profile [{profile.UserUID}]: {hubResponse.ErrorCode}");
+                _deletePopupState = DeletePopupState.ServerFailed;
+                return;
             }
 
-            // Properly remove the local data due to a successful removal.
+            // Cleanup local data due to successful removal
             await CleanupLocalProfileData(profile);
             _deletePopupState = DeletePopupState.Success;
         }
         catch (Exception ex)
         {
-            _logger.LogWarning($"Server deletion failed: {ex.Message}.");
+            _logger.LogWarning($"Server deletion failed for Account profile [{profile.UserUID}]: {ex.Message}.");
             _deletePopupState = DeletePopupState.ServerFailed;
         }
     }

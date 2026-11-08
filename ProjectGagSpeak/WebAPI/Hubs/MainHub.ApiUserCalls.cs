@@ -508,10 +508,10 @@ public partial class MainHub
         return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPersistKinkster), dto).ConfigureAwait(false);
     }
 
-    public async Task<HubResponse> UserRemoveKinkster(UserDto UserDto)
+    public async Task<HubResponse> UserRemoveKinkster(UserDto userDto)
     {
-        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError); ;
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserRemoveKinkster), UserDto).ConfigureAwait(false);
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserRemoveKinkster), userDto).ConfigureAwait(false);
     }
 
     public async Task<HubResponse> UserRemoveKinksters(UserListDto dto)
@@ -520,10 +520,10 @@ public partial class MainHub
         return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserRemoveKinksters), dto).ConfigureAwait(false);
     }
 
-    public async Task<HubResponse> UserDelete()
+    public async Task<HubResponse> UserDelete(UserDto userDto)
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserDelete)).ConfigureAwait(false);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserDelete), userDto).ConfigureAwait(false);
     }
     #endregion
 

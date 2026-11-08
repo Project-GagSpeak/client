@@ -3,10 +3,11 @@ using GagSpeak.Services.Configs;
 
 namespace GagSpeak.PlayerClient;
 
-public class AccountStorage
+public class AccountConfigData
 {
     // Every user can have 1 Account. 1 Account is made up of 1 Main Profile, and multiple AltProfiles.
     // Each Profile is bound to a character. This can be further inforced but I'd rather not unless necessary.
+    // (This will change later as we shift puppeteer implementation & achievement logic to follow sundouleia's formatting)
     public Dictionary<ulong, AccountProfile> Profiles { get; set; } = [];
 }
 
@@ -55,36 +56,61 @@ public record AccountProfile
 public class AccountConfig : IHybridSavable
 {
     private readonly ILogger<AccountConfig> _logger;
+    private readonly ConnectionsConfig _servers;
     private readonly HybridSaveService _saver;
-    public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
-    public int ConfigVersion => 2;
-    public int MaxBackups => 2;
+    public DateTime LastWriteTimeUTC => DateTime.MinValue;
+    public int ConfigVersion => 3;
+    public int MaxBackups => 3;
     public HybridSaveType SaveType => HybridSaveType.Json;
     public string ToFilePath(GsFiles files) => files.AccountConfig;
     public void WriteToStream(StreamWriter writer) => throw new NotImplementedException();
     public string JsonSerialize()
     {
+        var serversObj = new JObject();
+        foreach (var (serverUri, storage) in _config)
+            serversObj[serverUri] = JObject.FromObject(storage);
+
         return new JObject()
         {
             ["Version"] = ConfigVersion,
-            ["AccountInfo"] = JObject.FromObject(Current),
+            ["Servers"] = serversObj,
         }.ToString(Formatting.Indented);
     }
-    public AccountConfig(ILogger<AccountConfig> logger, HybridSaveService saver)
+
+    // Keyed by the ServerURI
+    private Dictionary<string, AccountConfigData> _config = [];
+
+    public AccountConfig(ILogger<AccountConfig> logger, ConnectionsConfig servers, HybridSaveService saver)
     {
         _logger = logger;
+        _servers = servers;
         _saver = saver;
         Load();
     }
 
-    public void Save() => _saver.Save(this);
+    public AccountConfigData Current => GetOrCreateConfig();
+    private AccountConfigData GetOrCreateConfig()
+    {
+        if (_config.TryGetValue(ConnectionsConfig.CurrentHubURI, out var res))
+            return res;
+        // Create and return.
+        _config[ConnectionsConfig.CurrentHubURI] = new AccountConfigData();
+        Save(); // Maybe remove idk.
+        return _config[ConnectionsConfig.CurrentHubURI];
+    }
+
+    public void Save()
+        => _saver.Save(this);
+
     public void Load()
     {
         var file = _saver.FileNames.AccountConfig;
-        _logger.LogInformation("Loading in Config for file: " + file);
+        _logger.LogInformation($"Loading AccountConfig file: {file}");
         if (_saver.Load(this) is not { } jObject)
         {
-            _logger.LogWarning("Config file not found for: " + file);
+            _logger.LogWarning($"Config file not found for: {file}");
+            _config = new();
+            _saver.Save(this);
             return;
         }
 
@@ -92,80 +118,51 @@ public class AccountConfig : IHybridSavable
 
         // execute based on version.
         // Old config formats are stored at the bottom of this file for reference.
-        switch (version)
+        try
         {
-            case 0:
-                MigrateAndLoadV0AsV2(jObject);
-                break;
-            case 1:
-                MigrateAndLoadV1AsV2(jObject);
-                break;
-            case 2:
-                LoadV2(jObject["AccountInfo"]);
-                break;
-            default:
-                _logger.LogError("Invalid Version!");
-                return;
+            switch (version)
+            {
+                case 0:
+                    MigrateV0ToV2(jObject);
+                    MigrateV2ToV3(jObject);
+                    LoadV3(jObject);
+                    break;
+                case 1:
+                    MigrateV1ToV2(jObject);
+                    MigrateV2ToV3(jObject);
+                    LoadV3(jObject);
+                    break;
+                case 2:
+                    MigrateV2ToV3(jObject);
+                    LoadV3(jObject);
+                    break;
+                case 3:
+                    LoadV3(jObject);
+                    break;
+                default:
+                    _logger.LogError("Invalid Version!");
+                    return;
+            }
         }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Failed to load AccountConfig.");
+            return;
+        }
+
         _logger.LogInformation("Config loaded.");
         Save();
     }
 
-    // V1->V2 migration is mostly just a property rename but also indexes accounts by their contentID
-    private void MigrateAndLoadV1AsV2(JObject root)
+    // Migrates V0 ("ServerStorage" -> "Authentications") into V2 ("AccountInfo" -> "Profiles")
+    private void MigrateV0ToV2(JObject root)
     {
-        var oldStorage = root["AccountInfo"] as JObject;
-
-        if (oldStorage == null)
-            throw new Bagagwa("Failed to find/parse old storage for v1 migration.");
-
-        var newStorage = new AccountStorage() { Profiles = new Dictionary<ulong, AccountProfile>() };
-
-        // Parse old profiles, and update key names...
-        var profiles = oldStorage["Profiles"] as JArray;
-        if (profiles != null)
-        {
-            foreach (var profile in profiles.OfType<JObject>())
-            {
-                var newProfile = new AccountProfile
-                {
-                    IsPrimary = profile["IsMainProfile"]?.Value<bool>() ?? false,
-                    HadValidConnection = profile["HadValidConnection"]?.Value<bool>() ?? false,
-                    UserUID = profile["ProfileUID"]?.Value<string>() ?? string.Empty,
-                    Key = profile["SecretKey"]?.Value<string>() ?? string.Empty,
-                    PlayerName = profile["PlayerName"]?.Value<string>() ?? string.Empty,
-                    WorldId = profile["WorldId"]?.Value<ushort>() ?? 0,
-                    ContentId = profile["ContentId"]?.Value<ulong>() ?? 0
-                };
-                newStorage.Profiles.Add(newProfile.ContentId, newProfile);
-            }
-        }
-
-        // write the new data back out.
-        root["AccountInfo"] = JObject.FromObject(newStorage);
-
-        // update config version
-        root["Version"] = 2;
-
-        Current = newStorage;
-    }
-
-    // TODO: UPDATE THIS FOR V2 AS WELL
-    private void MigrateAndLoadV0AsV2(JObject root)
-    {
-        // Get the old ServerStorage node.
-        var oldStorage = root["ServerStorage"] as JObject;
-        if (oldStorage == null)
+        if (root["ServerStorage"] is not JObject oldStorage)
             throw new Exception("Failed to find old ServerStorage for V0 migration.");
 
-        var newStorage = new AccountStorage()
-        {
-            Profiles = new Dictionary<ulong, AccountProfile>()
-        };
+        var newStorage = new AccountConfigData();
 
-        // Migrate each old authentication into a new AccountProfile.
-        var authentications = oldStorage["Authentications"] as JArray;
-        if (authentications != null)
+        if (oldStorage["Authentications"] is JArray authentications)
         {
             foreach (var auth in authentications.OfType<JObject>())
             {
@@ -181,28 +178,84 @@ public class AccountConfig : IHybridSavable
                     HadValidConnection = secretKey?["HasHadSuccessfulConnection"]?.Value<bool>() ?? false
                 };
 
-                newStorage.Profiles.Add(profile.ContentId, profile);
+                newStorage.Profiles[profile.ContentId] = profile;
             }
         }
 
-        // Replace the old storage in the root object
-        root["ServerStorage"] = JObject.FromObject(newStorage);
+        // Preserve custom ServiceUri if V0 had one, otherwise fall back on V2->V3 migration
+        if (oldStorage["ServiceUri"]?.Value<string>() is { Length: > 0 } legacyUri)
+            root["_LegacyServiceUri"] = legacyUri;
 
-        // Update version to 2
+        root.Remove("ServerStorage");
+        root["AccountInfo"] = JObject.FromObject(newStorage);
         root["Version"] = 2;
-
-        // Also update Current to reflect the new AccountStorage
-        Current = newStorage;
     }
 
-    private void LoadV2(JToken? data)
+    // Migrates V1 ("AccountInfo" -> "Profiles" JArray) into V2 ("AccountInfo" -> "Profiles" Dictionary)
+    private void MigrateV1ToV2(JObject root)
     {
-        if (data is not JObject storage)
-            return;
-        Current = storage.ToObject<AccountStorage>() ?? throw new Exception("Failed to load AccountStorage.");   
+        if (root["AccountInfo"] is not JObject oldStorage)
+            throw new Bagagwa("Failed to find/parse old storage for v1 migration.");
+
+        var newStorage = new AccountConfigData();
+
+        if (oldStorage["Profiles"] is JArray profiles)
+        {
+            foreach (var profile in profiles.OfType<JObject>())
+            {
+                var newProfile = new AccountProfile
+                {
+                    IsPrimary = profile["IsMainProfile"]?.Value<bool>() ?? false,
+                    HadValidConnection = profile["HadValidConnection"]?.Value<bool>() ?? false,
+                    UserUID = profile["ProfileUID"]?.Value<string>() ?? string.Empty,
+                    Key = profile["SecretKey"]?.Value<string>() ?? string.Empty,
+                    PlayerName = profile["PlayerName"]?.Value<string>() ?? string.Empty,
+                    WorldId = profile["WorldId"]?.Value<ushort>() ?? 0,
+                    ContentId = profile["ContentId"]?.Value<ulong>() ?? 0
+                };
+                newStorage.Profiles[newProfile.ContentId] = newProfile;
+            }
+        }
+
+        root["AccountInfo"] = JObject.FromObject(newStorage);
+        root["Version"] = 2;
     }
 
-    public AccountStorage Current { get; set; } = new AccountStorage();
+    private void MigrateV2ToV3(JObject root)
+    {
+        if (root["AccountInfo"] is not JObject accountInfo)
+            throw new Bagagwa("Failed to find AccountInfo for V2 -> V3 migration.");
+
+        var targetUri = root["_LegacyServiceUri"]?.Value<string>() ?? ConnectionsConfig.MAIN_SERVER_URI;
+
+        root["Servers"] = new JObject
+        {
+            [targetUri] = accountInfo.DeepClone()
+        };
+
+        root.Remove("AccountInfo");
+        root.Remove("_LegacyServiceUri");
+        root["Version"] = 3;
+    }
+
+    private void LoadV3(JObject root)
+    {
+        if (root["Servers"] is not JObject serversObj)
+            throw new Bagagwa("Failed to load Servers object for V3.");
+
+        var newConfig = new Dictionary<string, AccountConfigData>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var (serverUri, serverToken) in serversObj)
+        {
+            if (serverToken is not JObject storageObj)
+                continue;
+
+            var storage = storageObj.ToObject<AccountConfigData>() ?? new AccountConfigData();
+            newConfig[serverUri] = storage;
+        }
+
+        _config = newConfig;
+    }
 }
 
 /* FOR FUTURE REFERENCE - DO NOT DELETE
@@ -266,4 +319,24 @@ public class AccountConfig : IHybridSavable
     }
   }
 }
- */
+
+== V3 CONFIG FORMAT ==
+{
+  "Version": 3,
+  "Servers": {
+    "wss://gagspeak.kinkporium.studio": {
+      "Profiles": {
+        "99999999999": {
+          "ContentId": 99999999999,
+          "PlayerName": "",
+          "WorldId": 0,
+          "UserUID": "",
+          "Key": "",
+          "IsPrimary": true,
+          "HadValidConnection": true
+        }
+      }
+    }
+  }
+}
+*/
