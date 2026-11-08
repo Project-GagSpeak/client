@@ -450,7 +450,7 @@ public partial class SettingsHubService
 
             // Attempt deletion
             _logger.LogInformation($"Attempting to delete Account profile [{profile.UserUID}] from Server.");
-            var hubResponse = await _hub.UserDelete(new(new(profile.UserUID))).ConfigureAwait(false);
+            var hubResponse = await _hub.UserDelete(new UserDto(new UserData(profile.UserUID))).ConfigureAwait(false);
             if (hubResponse.ErrorCode is not GagSpeakApiEc.Success)
             {
                 _logger.LogWarning($"Server deletion failed for Account profile [{profile.UserUID}]: {hubResponse.ErrorCode}");
