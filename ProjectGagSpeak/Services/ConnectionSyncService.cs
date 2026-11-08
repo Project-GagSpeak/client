@@ -92,6 +92,12 @@ public sealed class ConnectionSyncService : DisposableMediatorSubscriberBase
     /// <summary>
     ///   By awaiting this, we know it will be distribute data once complete.
     /// </summary>
+    /// <remarks>
+    ///   This should shift to seperate calls where the async operations occur after 
+    ///   the server becomes connected, so it is not tied to connection. <br/>
+    ///   This will need to be switched carefully so achievements are not offset by this occurance.
+    ///   A pending progress will need to be attached for completions.
+    /// </remarks>
     public async Task SetClientDataForProfile(ConnectionResponse? response)
     {
         if (response is null)
