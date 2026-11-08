@@ -23,7 +23,7 @@ public static unsafe class HcApproachNearestHousing
 
     public static HardcoreTaskCollection GetTaskCollection(HcTaskManager hcTasks, int appartmentRoom = int.MaxValue)
     {
-        return hcTasks.CreateCollection(CollectionName, new(HcTaskControl.LockThirdPerson | HcTaskControl.BlockAllKeys | HcTaskControl.DoConfinementPrompts))
+        return hcTasks.CreateCollection(CollectionName, new(HcTaskControl.LockThirdPerson | HcTaskControl.BlockAllKeys | HcTaskControl.DoConfinementPrompts | HcTaskControl.AllowMovement))
             .Add(new HardcoreTask(GagspeakEx.IsPlayerFullyLoaded))
             .Add(new HardcoreTask(TargetNearestHousingNode))
             .Add(hcTasks.CreateBranch(IsTargetApartment, "Approach Housing Node")

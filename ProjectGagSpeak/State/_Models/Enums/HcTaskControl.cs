@@ -30,4 +30,6 @@ public enum HcTaskControl
 
     NoActions = 1 << 13, // blocks all action usage.
     NoTeleport = 1 << 14, // blocks all teleportation actions.
+
+    AllowMovement = 1 << 15, // automated movement, suspends FreezePlayer.
 }

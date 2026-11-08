@@ -30,14 +30,17 @@ public class PlayerCtrlHandler
     private readonly OverlayHandler _overlay;
     private readonly HcTaskManager _hcTasks;
     private readonly KinksterManager _kinksters;
+    private readonly ImprisonmentController _imprisonment;
     
-    private const string ConfinementTaskName = "Travel To Location";
+    public const string ConfinementTaskName = "Travel To Location";
+    private const string LockedEmoteTaskName = "Perform LockedEmote";
 
     // Stores the players's movement mode, useful for when we change it.
     private MovementMode _cachedPlayerMoveMode = MovementMode.NotSet;
     public PlayerCtrlHandler(ILogger<PlayerCtrlHandler> logger, GagspeakMediator mediator,
         MainConfig config, IpcCallerLifestream ipc, MovementController movement, 
-        OverlayHandler overlay, HcTaskManager hcTasks, KinksterManager kinksters)
+        OverlayHandler overlay, HcTaskManager hcTasks, KinksterManager kinksters,
+        ImprisonmentController imprisonment)
     {
         _logger = logger;
         _mediator = mediator;
@@ -47,6 +50,7 @@ public class PlayerCtrlHandler
         _overlay = overlay;
         _hcTasks = hcTasks;
         _kinksters = kinksters;
+        _imprisonment = imprisonment;
     }
 
     public async void ApplyHypnoEffect(UserData enactor, HypnoticEffect effect, DateTimeOffset expireTimeUTC, string? image)
@@ -126,15 +130,8 @@ public class PlayerCtrlHandler
         if (!_kinksters.TryGetValue(enactor, out var kinkster))
             throw new Exception($"Failed to get Kinkster for UID: {enactor.UID} for Locked Emote!");
 
-        _logger.LogInformation($"[{enactor.AliasOrUID}] Enabled your LockedFollowing state!", LogFilter.HardcoreMovement);
-        _hcTasks.CreateCollection("Perform LockedEmote", new(HcTaskControl.BlockAllKeys | HcTaskControl.InRequiredTurnTask))
-            .Add(new HardcoreTask(GagspeakEx.IsPlayerFullyLoaded))
-            .Add(_hcTasks.CreateBranch(() => kinkster.IsTargetable, "TargetIfVisible")
-                .SetTrueTask(new HardcoreTask(() => HcCommonTaskFuncs.TargetNode(() => kinkster.PlayerAddress)))
-                .AsBranch())
-            .Add(new HardcoreTask(() => HcCommonTaskFuncs.PerformExpectedEmote(ClientData.Hardcore!.EmoteId, ClientData.Hardcore.EmoteCyclePose)))
-            .Add(new HardcoreTask(() => _mediator.Publish(new HcStateCacheChanged())))
-            .Enqueue();
+        _logger.LogInformation($"[{enactor.AliasOrUID}] Enabled your LockedEmote state!", LogFilter.HardcoreMovement);
+        EnqueueLockedEmote(kinkster);
 
         GagspeakEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HcAttribute.EmoteState, true, enactor, MainHub.UID);
     }
@@ -144,9 +141,20 @@ public class PlayerCtrlHandler
         if (!_kinksters.TryGetValue(enactor, out var kinkster))
             throw new Exception($"Failed to get Kinkster for UID: {enactor.UID} for Locked Emote Update!");
 
-        _logger.LogInformation($"[{kinkster.GetNickAliasOrUid()}] Updated your LockedFollowing state!", LogFilter.HardcoreMovement);
-        _hcTasks.CreateCollection("ForcePerformInitialEmote", new(HcTaskControl.BlockAllKeys | HcTaskControl.InRequiredTurnTask))
+        _logger.LogInformation($"[{kinkster.GetNickAliasOrUid()}] Updated your LockedEmote state!", LogFilter.HardcoreMovement);
+        _hcTasks.RemoveIfPresent(LockedEmoteTaskName);
+        EnqueueLockedEmote(kinkster);
+    }
+
+    /// <summary> Performs the locked emote after confinement and imprisonment. Enqueued directly so it keeps its place in the queue. </summary>
+    private void EnqueueLockedEmote(Kinkster kinkster)
+    {
+        _hcTasks.CreateCollection(LockedEmoteTaskName, HcTaskConfiguration.Collection with { Flags = HcTaskControl.BlockAllKeys | HcTaskControl.InRequiredTurnTask })
             .Add(new HardcoreTask(GagspeakEx.IsPlayerFullyLoaded))
+            // Refresh imprisonment for our current territory & position.
+            .Add(new HardcoreTask(() => _mediator.Publish(new HcStateCacheChanged()), HcTaskConfiguration.Quick))
+            // Wait for the walk back to the cage, falling through to the emote if blocked.
+            .Add(new HardcoreTask(() => _imprisonment.IsCageSatisfied, "WaitForCage", HcTaskConfiguration.Default with { TimeoutAt = 120000 }))
             .Add(_hcTasks.CreateBranch(() => kinkster.IsTargetable, "TargetIfVisible")
                 .SetTrueTask(new HardcoreTask(() => HcCommonTaskFuncs.TargetNode(() => kinkster.PlayerAddress)))
                 .AsBranch())
@@ -159,7 +167,7 @@ public class PlayerCtrlHandler
     {
         _logger.LogInformation($"[{enactor.AliasOrUID}] Disabled your LockedEmote state!", LogFilter.HardcoreMovement);
         // abort the task if running still, or remove it from the queue.
-        _hcTasks.RemoveIfPresent("Perform LockedEmote");
+        _hcTasks.RemoveIfPresent(LockedEmoteTaskName);
         _mediator.Publish(new HcStateCacheChanged());
 
         if (giveAchievements)
@@ -172,35 +180,32 @@ public class PlayerCtrlHandler
         _logger.LogInformation($"[{enactor.AliasOrUID}] Enabled your IndoorConfinement!", LogFilter.HardcoreMovement);
         // Standard await for player to load.
         var doLifestreamMethod = address is not null && IpcCallerLifestream.APIAvailable;
-        var taskCtrlFlags = HcTaskControl.LockThirdPerson | HcTaskControl.BlockAllKeys | HcTaskControl.DoConfinementPrompts;
+        var taskCtrlFlags = HcTaskControl.LockThirdPerson | HcTaskControl.BlockAllKeys | HcTaskControl.DoConfinementPrompts | HcTaskControl.AllowMovement;
         if (doLifestreamMethod) taskCtrlFlags |= HcTaskControl.InLifestreamTask;
 
         var roomNumber = address is not null && address.PropertyType is PropertyType.Apartment ? address.Apartment : int.MaxValue;
 
         // enqueue the task collection based on if we are doing lifestream of not.
-        Svc.Framework.RunOnFrameworkThread(() =>
-        {
-            // Not respecting inner timeouts for some reason
-            _hcTasks.CreateCollection(ConfinementTaskName, HcTaskConfiguration.Branch with {  Flags = taskCtrlFlags })
-                .Add(_hcTasks.CreateBranch(() => doLifestreamMethod, "LifestreamTravelTask", HcTaskConfiguration.Branch)
-                    .SetTrueTask(_hcTasks.CreateGroup("TravelTaskGroup", HcTaskConfiguration.Default with { TimeoutAt = 120000 })
-                        .Add(GagspeakEx.IsPlayerFullyLoaded)
-                        .Add(() => _ipc.GoToAddress(address!.AsTuple()))
-                        .Add(() => !_ipc.IsCurrentlyBusy())
-                        .AsGroup())
-                    .AsBranch())
-                // Need to find a way to delay this or it skips to the movement operations before we begin zoning.
-                // It still works, but is just something of note.
-                .Add(new HardcoreTask(GagspeakEx.IsPlayerFullyLoaded))
-                .Add(_hcTasks.CreateBranch(() => doLifestreamMethod && HcApproachNearestHousing.AtHouseButMustBeCloser(), "Close Gap For Arrival")
-                    .SetTrueTask(new HardcoreTask(HcApproachNearestHousing.MoveToAcceptableRange, HcTaskConfiguration.Rapid with { OnEnd = () => StaticDetours.MoveOverrides.Disable() }))
-                    .AsBranch())
-                .Add(_hcTasks.CreateBranch(HcTaskUtils.IsOutside, "AppraochNearestNode", HcTaskConfiguration.Short)
-                    .SetTrueTask(HcApproachNearestHousing.GetTaskCollection(_hcTasks, roomNumber))
-                    .AsBranch())
-                .Add(new HardcoreTask(() => _mediator.Publish(new HcStateCacheChanged()), HcTaskConfiguration.Quick))
-                .Enqueue();
-        });
+        // Not respecting inner timeouts for some reason
+        _hcTasks.CreateCollection(ConfinementTaskName, HcTaskConfiguration.Branch with {  Flags = taskCtrlFlags })
+            .Add(_hcTasks.CreateBranch(() => doLifestreamMethod, "LifestreamTravelTask", HcTaskConfiguration.Branch)
+                .SetTrueTask(_hcTasks.CreateGroup("TravelTaskGroup", HcTaskConfiguration.Default with { TimeoutAt = 120000 })
+                    .Add(GagspeakEx.IsPlayerFullyLoaded)
+                    .Add(() => _ipc.GoToAddress(address!.AsTuple()))
+                    .Add(() => !_ipc.IsCurrentlyBusy())
+                    .AsGroup())
+                .AsBranch())
+            // Need to find a way to delay this or it skips to the movement operations before we begin zoning.
+            // It still works, but is just something of note.
+            .Add(new HardcoreTask(GagspeakEx.IsPlayerFullyLoaded))
+            .Add(_hcTasks.CreateBranch(() => doLifestreamMethod && HcApproachNearestHousing.AtHouseButMustBeCloser(), "Close Gap For Arrival")
+                .SetTrueTask(new HardcoreTask(HcApproachNearestHousing.MoveToAcceptableRange, HcTaskConfiguration.Rapid with { OnEnd = () => StaticDetours.MoveOverrides.Disable() }))
+                .AsBranch())
+            .Add(_hcTasks.CreateBranch(HcTaskUtils.IsOutside, "AppraochNearestNode", HcTaskConfiguration.Short)
+                .SetTrueTask(HcApproachNearestHousing.GetTaskCollection(_hcTasks, roomNumber))
+                .AsBranch())
+            .Add(new HardcoreTask(() => _mediator.Publish(new HcStateCacheChanged()), HcTaskConfiguration.Quick))
+            .Enqueue();
         _logger.LogDebug($"Enqueued Hardcore Task Stack for Indoor Confinement!", LogFilter.HardcoreMovement);
         GagspeakEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HcAttribute.Confinement, true, enactor, MainHub.UID);
     }

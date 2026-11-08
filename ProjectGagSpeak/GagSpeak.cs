@@ -331,6 +331,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<IpcCallerMoodles>()
         .AddSingleton<IpcCallerPenumbra>()
         .AddSingleton<IpcCallerSundouleia>()
+        .AddSingleton<IpcCallerVnavmesh>()
         .AddSingleton<IpcManager>()
         .AddSingleton<IpcProvider>()
         .AddSingleton<PenumbraTooltips>();
