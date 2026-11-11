@@ -1,3 +1,4 @@
+using GagSpeak.PlayerControl;
 using CkCommons;
 using CkCommons.DrawSystem;
 using Dalamud.Bindings.ImGui;
@@ -78,6 +79,10 @@ public class KinksterInfoCache : ISidePanelCache, IDisposable
     public string ImprisonTimer = string.Empty;
     public Vector3 ImprisonPos = Vector3.Zero;
     public float ImprisonRadius = 1f;
+
+    public bool LeashMode = false;
+    public float LeashRange = 5f;
+    public bool LeashForceWalk = false;
 
     public string ChatBoxHideTimer = string.Empty;
     public string ChatInputHideTimer = string.Empty;
@@ -202,6 +207,9 @@ public class KinksterInfoCache : ISidePanelCache, IDisposable
         UseLifestreamAddress = false;
         ImprisonPos = Vector3.Zero;
         ImprisonRadius = 1f;
+        LeashMode = false;
+        LeashRange = 5f;
+        LeashForceWalk = false;
         ApplyIntensity = 0;
         ApplyVibeIntensity = 0;
         ApplyDuration = 0.1f;
@@ -277,6 +285,7 @@ public class KinksterInfoCache : ISidePanelCache, IDisposable
 
         var enactingString = MainHub.UID;
         if (attribute is HcAttribute.EmoteState) enactingString += $"|{EmoteId}";
+        if (attribute is HcAttribute.Follow && LeashMode) enactingString += $"|{new Leash(LeashRange, LeashForceWalk).ToTag()}";
         if (Kinkster!.PairPerms.DevotionalLocks) enactingString += Constants.DevotedString;
         var newHcData = attribute switch
         {

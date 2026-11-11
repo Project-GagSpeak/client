@@ -1,5 +1,7 @@
 using CkCommons;
 using Dalamud.Game.ClientState.Conditions;
+using Dalamud.Game.ClientState.Objects.Enums;
+using Dalamud.Game.ClientState.Objects.Types;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using GagSpeak.GameInternals.Detours;
 using GagSpeak.Interop.Helpers;
@@ -20,26 +22,50 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
     private const int CONTROL_WALKING_OFFSET_NORMAL = 0x7637; // Applies when not automoving
     private const int CONTROL_WALKING_OFFSET_AUTOMOVE = 0x7518; // Applies when automoving
 
+    // Navmesh follow and leash pull back.
+    private const float FollowDistance = 2f;
+    private const float RepathDistance = 1f; // re-path once the goal has moved this far.
+    private const int RepathIntervalMs = 500;
+    private const float LeashReleaseFactor = 0.75f; // pull back to this fraction of the range before letting go.
+    private const float ZoneLineOvershoot = 3f; // walk this far past where the leader vanished.
+    private const float UsedNearLastSeen = 6f; // vanishing this close to their target means they used it.
+
     private readonly record struct MoveState(bool MustWalk, bool WasWalking);
 
     private readonly PlayerControlCache _cache;
     private readonly HcTaskManager _hcTasks;
     private readonly MovementDetours _detours;
+    private readonly HousingNavmesh _navmesh;
 
     // Fields useful for forced-follow behavior.
     private static Stopwatch _timeoutTracker = new Stopwatch();
     private Vector3 _lastPos = Vector3.Zero;
     private MoveState _moveState;
     private bool _freezePlayer = false;
+
+    // Navmesh follow and leash state.
+    private bool _navFollowing; // the navmesh, not /follow, drives the follow.
+    private List<Vector3>? _followPath; // null while standing.
+    private Vector3 _followGoal;
+    private long _nextRepath;
+    private bool _debugFollow;
+    private Func<IGameObject?>? _leashLeader;
+    private Leash _leash;
+    private Vector3? _leaderLastSeen; // leash anchor while the leader is out of sight.
+    private Vector2 _leaderHeading; // XZ direction the leader last moved.
+    private bool _pastLastSeen; // done following them out, now just holding.
+    private ulong? _leaderUsed; // last door, aetheryte or npc the leader targeted.
+
     public MovementController(ILogger<MovementController> logger, GagspeakMediator mediator,
-        PlayerControlCache cache, HcTaskManager hcTasks, MovementDetours detours)
+        PlayerControlCache cache, HcTaskManager hcTasks, MovementDetours detours, HousingNavmesh navmesh)
         : base(logger, mediator)
     {
         _cache = cache;
         _hcTasks = hcTasks;
         _detours = detours;
+        _navmesh = navmesh;
         _timeoutTracker.Stop();
-        Mediator.Subscribe<TerritoryChanged>(this, _ => EnsureConfinement());
+        Mediator.Subscribe<TerritoryChanged>(this, _ => OnTerritoryChanged());
         Mediator.Subscribe<HcStateCacheChanged>(this, _ => UpdateHardcoreStatus());
         Mediator.Subscribe<FrameworkUpdateMessage>(this, _ => FrameworkUpdate());
         Svc.Condition.ConditionChange += OnConditionChange;
@@ -51,11 +77,20 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
         base.Dispose();
     }
 
+    private void OnTerritoryChanged()
+    {
+        ForgetLeader();
+        EnsureConfinement();
+    }
+
     private void OnConditionChange(ConditionFlag flag, bool value)
     {
         if (flag == ConditionFlag.Mounted)
             UpdateHardcoreStatus();
     }
+
+    /// <summary> If forced follow should path over the navmesh instead of using /follow. </summary>
+    public bool UseNavFollow => _navmesh.Ready;
 
     // reference for Auto-Unlock timer.
     public static TimeSpan TimeIdleDuringFollow => _timeoutTracker.Elapsed;
@@ -169,6 +204,11 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
         if (_freezePlayer && !_detours.ForceDisableMovementIsActive)
             _detours.EnableFullMovementLock();
 
+        if (_timeoutTracker.IsRunning || _debugFollow)
+            UpdateNavFollow();
+        else if (_leashLeader is not null)
+            UpdateLeash();
+
         var isWalking = IsWalking();
 
         // If we are following someone and too far away we should catch up to them.
@@ -184,6 +224,163 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
             ForceWalking();
     }
 
+    /// <summary>
+    ///   Keeps within <see cref="FollowDistance"/> of the target over the navmesh. Hands back to /follow
+    ///   once the mesh is gone.
+    /// </summary>
+    private void UpdateNavFollow()
+    {
+        if (!_navmesh.Ready)
+        {
+            if (_navFollowing)
+            {
+                StopWalking();
+                // /follow is throttled, so retry until it goes out.
+                _navFollowing = HcTaskUtils.FollowTarget() is not true;
+            }
+            return;
+        }
+
+        _navFollowing = true;
+        if (!PlayerData.Available || Svc.Targets.Target is not { } target)
+            return;
+
+        if (PlayerData.DistanceTo(target.Position) <= FollowDistance)
+            StopWalking();
+        else
+            WalkToward(target.Position, FollowDistance);
+    }
+
+    /// <summary>
+    ///   Walks toward <paramref name="goal"/>, re-pathing as it moves, until within <paramref name="proximity"/>.
+    ///   Walks straight where the navmesh has no path, e.g. outside the area it covers.
+    /// </summary>
+    private void WalkToward(Vector3 goal, float proximity, bool turnCamera = true)
+    {
+        var now = Environment.TickCount64;
+        if (now >= _nextRepath && (_followPath is null || Vector3.Distance(goal, _followGoal) > RepathDistance))
+        {
+            _nextRepath = now + RepathIntervalMs;
+            _followGoal = goal;
+            _followPath = _navmesh.FindPath(PlayerData.Position, goal) ?? [goal];
+        }
+
+        if (_followPath is not null && StaticDetours.MoveOverrides.FollowPath(_followPath, proximity, 0, turnCamera, _navmesh.IsJumpStart) is true)
+            StopWalking();
+    }
+
+    private void StopWalking()
+    {
+        if (_followPath is null)
+            return;
+        StaticDetours.MoveOverrides.Disable();
+        _followPath = null;
+    }
+
+    public bool Leashed => _leashLeader is not null;
+
+    /// <summary> <paramref name="leader"/> gives the leader, or null while they are not around. </summary>
+    public void StartLeash(Leash leash, Func<IGameObject?> leader)
+    {
+        _leash = leash;
+        _leashLeader = leader;
+        UpdateHardcoreStatus();
+    }
+
+    public void StopLeash()
+    {
+        _leashLeader = null;
+        ForgetLeader();
+        Leash.Debug = null;
+        StopWalking();
+        _nextRepath = 0;
+        UpdateHardcoreStatus();
+    }
+
+    /// <summary>
+    ///   Pulls us back toward the leader once past the leash range, following them through zone lines when they
+    ///   vanish. Rests while riding pillion.
+    /// </summary>
+    private void UpdateLeash()
+    {
+        if (!PlayerData.Available || Svc.Condition[ConditionFlag.RidingPillion])
+        {
+            StopWalking();
+            return;
+        }
+
+        if (_leashLeader?.Invoke() is { } leader)
+            TrackLeader(leader);
+        else if (_leaderLastSeen is { } lastSeen && !_pastLastSeen && !FollowLeaderOut(lastSeen))
+            return;
+
+        if (_leaderLastSeen is not { } leaderPos)
+            return;
+
+        // Start pulling past the range, stop once well inside it.
+        var distance = PlayerData.DistanceTo(leaderPos);
+        var release = _leash.Range * LeashReleaseFactor;
+        if (distance <= (_followPath is null ? _leash.Range : release))
+            StopWalking();
+        else
+            WalkToward(leaderPos, release, false); // keep the player's camera (Legacy movement only).
+    }
+
+    /// <summary> Records the leader's position, heading and interactable target. </summary>
+    private void TrackLeader(IGameObject leader)
+    {
+        if (_leaderLastSeen is { } prev && new Vector2(leader.Position.X - prev.X, leader.Position.Z - prev.Z) is { } moved && moved.Length() > 0.05f)
+            _leaderHeading = Vector2.Normalize(moved);
+        if (leader.TargetObject is { ObjectKind: ObjectKind.EventObj or ObjectKind.Aetheryte or ObjectKind.EventNpc } used)
+            _leaderUsed = used.GameObjectId;
+        _leaderLastSeen = leader.Position;
+        _pastLastSeen = false;
+    }
+
+    /// <summary> Follows the vanished leader out, then holds the leash. Returns false while still walking. </summary>
+    private bool FollowLeaderOut(Vector3 lastSeen)
+    {
+        // They used something to leave. Hold the leash there so the player can use it too.
+        if (_leaderUsed is { } id && Svc.Objects.SearchById(id) is { } used && Vector3.Distance(used.Position, lastSeen) <= UsedNearLastSeen)
+            _leaderLastSeen = used.Position;
+        else
+        {
+            // They vanish just short of a zone line, so walk on past it. Give up if a wall is in the way.
+            var goal = lastSeen + new Vector3(_leaderHeading.X, 0, _leaderHeading.Y) * ZoneLineOvershoot;
+            if (PlayerData.DistanceTo(new Vector2(goal.X, goal.Z)) > 0.25f && StaticDetours.MoveOverrides.StalledFor <= 1500)
+            {
+                WalkToward(goal, 0.25f, false);
+                return false;
+            }
+            StopWalking();
+        }
+
+        _pastLastSeen = true;
+        return true;
+    }
+
+    private void ForgetLeader()
+    {
+        _leaderLastSeen = null;
+        _pastLastSeen = false;
+        _leaderUsed = null;
+    }
+
+    /// <summary> Debug: navmesh-follow the current target without Locked Follow, to test the follow solo. </summary>
+    public bool DebugFollow
+    {
+        get => _debugFollow;
+        set
+        {
+            _debugFollow = value;
+            if (!value)
+            {
+                StopWalking();
+                _navFollowing = false;
+            }
+        }
+    }
+
     public void RestartTimeoutTracker()
         => _timeoutTracker.Restart();
 
@@ -191,6 +388,9 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
     {
         _timeoutTracker.Reset();
         _lastPos = Vector3.Zero;
+        StopWalking();
+        _navFollowing = false;
+        _nextRepath = 0;
     }
 
     [Obsolete("This is retained for informational purposes, use IsWalking.")]

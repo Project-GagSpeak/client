@@ -30,3 +30,6 @@ bash.exe.*
 
 # language server cache
 *.lscache
+
+# Private drop-in code, kept out of the repo (see PlayerControl/Utils/HousingNavmesh.Stub.cs).
+ProjectGagSpeak/Private/
