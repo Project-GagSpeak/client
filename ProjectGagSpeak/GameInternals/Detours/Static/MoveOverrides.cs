@@ -55,6 +55,8 @@ public unsafe class MoveOverrides : IDisposable
     // doesn't matter.
     private Vector3 _progressAnchor;
     private const float ProgressDistance = 0.25f;
+    // A jump link we just reached: jump once facing its landing, while still near where it starts.
+    private (Vector3 Start, long Tick)? _pendingJump;
     // Closest we have come to the target so far, to catch traveling confidently the wrong way.
     private float _closestDistanceXZ;
     private float _currentDistanceXZ;
@@ -188,6 +190,7 @@ public unsafe class MoveOverrides : IDisposable
         _progressAnchor = Vector3.Zero;
         _closestDistanceXZ = 0f;
         _currentDistanceXZ = 0f;
+        _pendingJump = null;
     }
 
     // a version of MoveToNode but for position.
@@ -248,8 +251,9 @@ public unsafe class MoveOverrides : IDisposable
     /// <summary>
     ///   Walks the waypoints of <paramref name="path"/> in order, removing each as it is reached. Returns true once
     ///   the last is within <paramref name="proximity"/>, and null after <paramref name="stallMs"/> without progress.
+    ///   Waypoints <paramref name="isJumpStart"/> marks are jump links, so we jump from them toward the next one.
     /// </summary>
-    public unsafe bool? FollowPath(List<Vector3> path, float proximity, int stallMs, bool turnCamera = true)
+    public unsafe bool? FollowPath(List<Vector3> path, float proximity, int stallMs, bool turnCamera = true, Func<Vector3, bool>? isJumpStart = null)
     {
         if (!PlayerData.Available)
             return false;
@@ -258,10 +262,16 @@ public unsafe class MoveOverrides : IDisposable
         var cur = PlayerData.Position;
         var prev = _trackingProgress ? PrevPos : cur;
         while (path.Count > 1 && PassedWaypoint(path[0], prev, cur))
+        {
+            if (isJumpStart?.Invoke(path[0]) is true)
+                _pendingJump = (path[0], Environment.TickCount64);
             path.RemoveAt(0);
+        }
 
         if (path.Count == 0)
             return true;
+
+        TryJumpToward(path[0], cur);
 
         var isLast = path.Count == 1;
         if (MoveToPoint(path[0], isLast ? proximity : 0f, turnCamera) && isLast)
@@ -271,6 +281,29 @@ public unsafe class MoveOverrides : IDisposable
         }
 
         return stallMs > 0 && StalledFor > stallMs ? null : false;
+    }
+
+    /// <summary> Jumps for the pending jump link once we face <paramref name="landing"/>, or drops it if we moved on. </summary>
+    private void TryJumpToward(Vector3 landing, Vector3 cur)
+    {
+        if (_pendingJump is not { } jump)
+            return;
+
+        // Too late once we're airborne, it's been a second, or we've moved over a yalm past the link's start.
+        if (PlayerData.IsJumping || Environment.TickCount64 - jump.Tick > 1000
+            || Vector2.Distance(new(cur.X, cur.Z), new(jump.Start.X, jump.Start.Z)) > 1f)
+        {
+            _pendingJump = null;
+            return;
+        }
+
+        var facing = (Angle.FromDirectionXZ(landing - cur) - PlayerData.Rotation.Radians()).Normalized();
+        if (Math.Abs(facing.Rad) <= 30.Degrees().Rad && NodeThrottler.Throttle("MoveOverrides.JumpLink", 500))
+        {
+            ChatControlService.SendGeneralActionCommand(2); // Jump
+            Svc.Logger.Verbose($"Jumping a jump link from {jump.Start:F2} toward {landing:F2}.");
+            _pendingJump = null;
+        }
     }
 
     /// <summary>

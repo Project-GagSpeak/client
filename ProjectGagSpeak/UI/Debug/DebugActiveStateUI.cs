@@ -260,6 +260,19 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
         ImGui.SameLine();
         ImGui.Checkbox("Force Walk##DebugLeash", ref _leashForceWalk);
 
+        // Draws the navmesh onto the game view around us.
+        ImGui.Text("Show:");
+        ImGui.SameLine();
+        ImGui.Checkbox("Colliders##NavDraw", ref _navmesh.DrawCollision);
+        ImGui.SameLine();
+        ImGui.Checkbox("Walkable##NavDraw", ref _navmesh.DrawWalkable);
+        ImGui.SameLine();
+        ImGui.Checkbox("Jumps##NavDraw", ref _navmesh.DrawJumps);
+        ImGui.SameLine();
+        ImGui.Checkbox("Path##NavDraw", ref _navmesh.DrawPath);
+        ImGui.SetNextItemWidth(150f);
+        ImGui.SliderFloat("Draw Radius##NavDraw", ref _navmesh.DrawRadius, 2f, 40f, "%.0fy");
+
         // With a partner: apply their real Locked Follow or Leash to ourselves locally, with every restriction,
         // without them pressing anything. Nothing goes to the server.
         ImGui.Separator();

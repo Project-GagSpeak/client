@@ -265,7 +265,7 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
             _followPath = _navmesh.FindPath(PlayerData.Position, goal) ?? [goal];
         }
 
-        if (_followPath is not null && StaticDetours.MoveOverrides.FollowPath(_followPath, proximity, 0, turnCamera) is true)
+        if (_followPath is not null && StaticDetours.MoveOverrides.FollowPath(_followPath, proximity, 0, turnCamera, _navmesh.IsJumpStart) is true)
             StopWalking();
     }
 

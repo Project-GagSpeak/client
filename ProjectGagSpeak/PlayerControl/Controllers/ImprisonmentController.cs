@@ -135,7 +135,7 @@ public class ImprisonmentController : DisposableMediatorSubscriberBase
     {
         var result = path is null
             ? StaticDetours.MoveOverrides.MoveToPointOrFail(origin, arrival, StallTimeoutMs, DivergenceMargin)
-            : StaticDetours.MoveOverrides.FollowPath(path, arrival, StallTimeoutMs);
+            : StaticDetours.MoveOverrides.FollowPath(path, arrival, StallTimeoutMs, isJumpStart: _navmesh.IsJumpStart);
         if (result is not null)
             return result;
 
@@ -175,7 +175,7 @@ public class ImprisonmentController : DisposableMediatorSubscriberBase
 
         Logger.LogDebug($"Debug walk: {path.Count} waypoints to {point:F2}.");
         _hcTasks.RemoveIfPresent(DebugWalkToName);
-        _hcTasks.InsertTask(() => StaticDetours.MoveOverrides.FollowPath(path, 0.25f, StallTimeoutMs), DebugWalkToName,
+        _hcTasks.InsertTask(() => StaticDetours.MoveOverrides.FollowPath(path, 0.25f, StallTimeoutMs, isJumpStart: _navmesh.IsJumpStart), DebugWalkToName,
             HcTaskConfiguration.Default with { OnEnd = () => StaticDetours.MoveOverrides.Disable(), Flags = State.HcTaskControl.BlockMovementKeys });
     }
 
