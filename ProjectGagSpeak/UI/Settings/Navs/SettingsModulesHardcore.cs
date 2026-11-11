@@ -161,26 +161,32 @@ public class SettingsModulesHardcore
         DrawArousalToggle(GSLoc.Settings.Options.ArousalDtrLabel, GSLoc.Settings.Options.ArousalDtrTT,
             _config.Data.DtrArousal, v => { _config.Data.DtrArousal = v; _mediator.Publish(new DTRRefreshMessage()); }, false);
 
-        // The meter runs regardless of Arousal Effects, so the timings are always editable.
+        // Timings lock while any effect is affecting you, so they can't be used to calm down early.
         var buildMinutes = _config.Data.ArousalBuildMinutes;
         ImGui.SetNextItemWidth(200f);
-        if (ImGui.SliderInt(GSLoc.Settings.Options.ArousalBuildTime, ref buildMinutes, 15, 480, "%d min", ImGuiSliderFlags.AlwaysClamp))
+        using (ImRaii.Disabled(ArousalService.AnyEffectActive))
         {
-            _config.Data.ArousalBuildMinutes = buildMinutes;
-            _config.Save();
-            _arousal.UpdateFinalCache();
+            if (ImGui.SliderInt(GSLoc.Settings.Options.ArousalBuildTime, ref buildMinutes, 15, 480, "%d min", ImGuiSliderFlags.AlwaysClamp))
+            {
+                _config.Data.ArousalBuildMinutes = buildMinutes;
+                _config.Save();
+                _arousal.UpdateFinalCache();
+            }
         }
-        CkGui.HelpTextFramed(GSLoc.Settings.Options.ArousalBuildTimeTT, true);
+        CkGui.HelpTextFramed(GSLoc.Settings.Options.ArousalBuildTimeTT, true, hFlags: ImGuiHoveredFlags.AllowWhenDisabled);
 
         var decayMinutes = _config.Data.ArousalDecayMinutes;
         ImGui.SetNextItemWidth(200f);
-        if (ImGui.SliderInt(GSLoc.Settings.Options.ArousalDecayTime, ref decayMinutes, 5, 480, "%d min", ImGuiSliderFlags.AlwaysClamp))
+        using (ImRaii.Disabled(ArousalService.AnyEffectActive))
         {
-            _config.Data.ArousalDecayMinutes = decayMinutes;
-            _config.Save();
-            _arousal.UpdateFinalCache();
+            if (ImGui.SliderInt(GSLoc.Settings.Options.ArousalDecayTime, ref decayMinutes, 5, 480, "%d min", ImGuiSliderFlags.AlwaysClamp))
+            {
+                _config.Data.ArousalDecayMinutes = decayMinutes;
+                _config.Save();
+                _arousal.UpdateFinalCache();
+            }
         }
-        CkGui.HelpTextFramed(GSLoc.Settings.Options.ArousalDecayTimeTT, true);
+        CkGui.HelpTextFramed(GSLoc.Settings.Options.ArousalDecayTimeTT, true, hFlags: ImGuiHoveredFlags.AllowWhenDisabled);
     }
 
     private void DrawArousalToggle(string label, string tooltip, bool value, Action<bool> set, bool disabled)

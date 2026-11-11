@@ -1195,9 +1195,9 @@ namespace GagSpeak.Localization
         public readonly string GlobalArousal = Loc.Localize("MainOptions_GlobalArousal", "Arousal Effects");
         public readonly string GlobalArousalTT = Loc.Localize("MainOptions_GlobalArousalTT", "Lets your arousal affect you with chat stutter, shortened messages, a screen blush, and slower GCDs. Arousal still builds and fades while this is off.--SEP--Can't be turned off while it's affecting you.");
         public readonly string ArousalStutter = Loc.Localize("MainOptions_ArousalStutter", "Stutter");
-        public readonly string ArousalStutterTT = Loc.Localize("MainOptions_ArousalStutterTT", "Your chat messages stutter as arousal builds.--SEP--Can't be turned off while it's affecting you.");
+        public readonly string ArousalStutterTT = Loc.Localize("MainOptions_ArousalStutterTT", "Your chat messages stutter as arousal builds.--SEP--Only applies while Live Chat Garbler is on, in your Enabled Garbler Channels and Global Chat.--SEP--Can't be turned off while it's affecting you.");
         public readonly string ArousalWordLimit = Loc.Localize("MainOptions_ArousalWordLimit", "Trailing Off");
-        public readonly string ArousalWordLimitTT = Loc.Localize("MainOptions_ArousalWordLimitTT", "At high arousal your chat messages get cut short and trail off.--SEP--Can't be turned off while it's affecting you.");
+        public readonly string ArousalWordLimitTT = Loc.Localize("MainOptions_ArousalWordLimitTT", "At high arousal your chat messages get cut short and trail off.--SEP--Only applies while Live Chat Garbler is on, in your Enabled Garbler Channels and Global Chat.--SEP--Can't be turned off while it's affecting you.");
         public readonly string ArousalBlush = Loc.Localize("MainOptions_ArousalBlush", "Screen Blush");
         public readonly string ArousalBlushTT = Loc.Localize("MainOptions_ArousalBlushTT", "A pink blush creeps in from the edges of your screen, throbbing at very high arousal.--SEP--Can't be turned off while it's affecting you.");
         public readonly string ArousalGcdDelay = Loc.Localize("MainOptions_ArousalGcdDelay", "Sluggish Actions");
@@ -1207,9 +1207,9 @@ namespace GagSpeak.Localization
         public readonly string ArousalBlur = Loc.Localize("MainOptions_ArousalBlur", "Blurred Vision");
         public readonly string ArousalBlurTT = Loc.Localize("MainOptions_ArousalBlurTT", "Not available yet.");
         public readonly string ArousalBuildTime = Loc.Localize("MainOptions_ArousalBuildTime", "Build-up Time");
-        public readonly string ArousalBuildTimeTT = Loc.Localize("MainOptions_ArousalBuildTimeTT", "How long a strong gag and strong restraint set take to fully arouse you. Stronger setups are faster, lighter ones slower.");
+        public readonly string ArousalBuildTimeTT = Loc.Localize("MainOptions_ArousalBuildTimeTT", "How long a strong gag and strong restraint set take to fully arouse you. Stronger setups are faster, lighter ones slower.--SEP--Can't be changed while arousal is affecting you.");
         public readonly string ArousalDecayTime = Loc.Localize("MainOptions_ArousalDecayTime", "Calm-down Time");
-        public readonly string ArousalDecayTimeTT = Loc.Localize("MainOptions_ArousalDecayTimeTT", "How long it takes to fully calm down once you're no longer wearing anything arousing.");
+        public readonly string ArousalDecayTimeTT = Loc.Localize("MainOptions_ArousalDecayTimeTT", "How long it takes to fully calm down once you're no longer wearing anything arousing.--SEP--Can't be changed while arousal is affecting you.");
 
         public readonly string GagPadlockTimer = Loc.Localize("MainOptions_GagPadlockTimer", "Expired Timer Gag Removal");
         public readonly string GagPadlockTimerTT = Loc.Localize("MainOptions_GagPadlockTimerTT", "Automatically removes locked gags when the timer expires.");
