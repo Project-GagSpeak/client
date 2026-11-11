@@ -31,6 +31,10 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
     private readonly SelfBondageService _selfBondage;
     private readonly ReactionDistributor _processor;
 
+    // Stops Arousal triggers with opposing Arousal reactions from firing each other every tick.
+    private static readonly TimeSpan ArousalTriggerCooldown = TimeSpan.FromSeconds(30);
+    private readonly Dictionary<Guid, DateTime> _arousalTriggerFired = new();
+
     public TriggerHandler(ILogger<TriggerHandler> logger, GagspeakMediator mediator,
         MainConfig config, KinksterManager kinksters, PuppeteerManager aliases,
         TriggerManager triggers, SelfBondageService selfBondage, ReactionDistributor processor)
@@ -50,6 +54,7 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
         Mediator.Subscribe<RestrictionStateChanged>(this, _ => OnRestrictionChange(_.State, _.Layer, _.Data, _.Enactor, _.Target));
         Mediator.Subscribe<RestraintStateChanged>(this, _ => OnRestraintChange(_.State, _.Data, _.Enactor, _.Target));
         Mediator.Subscribe<DeathrollResult>(this, _ => OnSocialGameEnd(_.WinnerNameWorld, _.LoserNameWorld));
+        Mediator.Subscribe<ArousalChanged>(this, _ => OnArousalChanged(_.Previous, _.Current));
     }
 
     #region Handlers
@@ -193,6 +198,28 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
             .OrderByDescending(t => t.Priority);
 
         HandleTriggerCandidates(hpTriggers);
+    }
+
+    private void OnArousalChanged(float previous, float current)
+    {
+        // Arousal triggers only run while Arousal Effects is enabled.
+        if (ClientData.Globals?.GlobalArousal != true)
+            return;
+
+        // Only fire on the change that crosses the threshold, and not again until the cooldown passes.
+        var now = DateTime.UtcNow;
+        var arousalTriggers = _triggers.Storage.Arousal
+            .Where(t => t.PassKind is ThresholdPassType.Over
+                ? previous < t.Threshold && current >= t.Threshold
+                : previous > t.Threshold && current <= t.Threshold)
+            .Where(t => !_arousalTriggerFired.TryGetValue(t.Identifier, out var fired) || now - fired >= ArousalTriggerCooldown)
+            .OrderByDescending(t => t.Priority)
+            .ToList();
+
+        foreach (var trigger in arousalTriggers)
+            _arousalTriggerFired[trigger.Identifier] = now;
+
+        HandleTriggerCandidates(arousalTriggers);
     }
 
     private void OnGagChange(NewState state, int layer, ActiveGagSlot data, string enactor, string target)

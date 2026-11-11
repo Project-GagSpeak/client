@@ -417,6 +417,38 @@ public sealed class DetectionDrawer : IDisposable
         }
     }
 
+    public void DrawArousal(ArousalTrigger trigger)
+    {
+        CkGui.FramedIconText(FAI.Heartbeat);
+        CkGui.TextFrameAlignedInline("When arousal goes");
+        CkGui.ColorTextFrameAlignedInline(trigger.PassKind.ToString(), ImGuiColors.TankBlue);
+        CkGui.ColorTextFrameAlignedInline($"{trigger.Threshold}%", ImGuiColors.TankBlue);
+    }
+
+    public void DrawArousalEditor(ArousalTrigger trigger)
+    {
+        CkGui.FramedIconText(FAI.Flag);
+        CkGui.TextFrameAlignedInline("Threshold Pass Type:");
+
+        ImUtf8.SameLineInner();
+        if (CkGuiUtils.EnumCombo("##ArousalPassType", ImGui.CalcTextSize("undermmm").X, trigger.PassKind, out var newVal))
+            trigger.PassKind = newVal;
+        CkGui.AttachTooltip("--COL--[Under]:--COL-- Arousal drops below the threshold" +
+            "--SEP----COL--[Over]:--COL-- Arousal rises above the threshold", GsCol.VibrantPink.Vec4());
+
+        // Arousal can't go over 100% or under 0%, so those thresholds could never be crossed.
+        var (min, max) = trigger.PassKind is ThresholdPassType.Over ? (1, 100) : (0, 99);
+        trigger.Threshold = Math.Clamp(trigger.Threshold, min, max);
+
+        CkGui.FramedIconText(FAI.Heartbeat);
+        var threshold = trigger.Threshold;
+        ImUtf8.SameLineInner();
+        ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
+        if (ImGui.DragInt("##ArousalThreshold", ref threshold, 0.1f, min, max, "%d%%", ImGuiSliderFlags.AlwaysClamp))
+            trigger.Threshold = threshold;
+        CkGui.AttachTooltip("The arousal % that must be crossed.");
+    }
+
     public void DrawRestraint(RestraintTrigger trigger)
     {
         ImGui.Image(CosmeticService.CoreTextures.Cache[CoreTexture.Restrained].Handle, new(ImUtf8.FrameHeight));

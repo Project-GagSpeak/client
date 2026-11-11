@@ -309,7 +309,8 @@ public class AliasesTab : IFancyTab
         var comboW = 100f * ImGuiHelpers.GlobalScale;
         var rightW = CkGui.IconButtonSize(FAI.Plus).X + comboW;
         var activeTypes = alias.Actions.Select(x => x.ActionType);
-        var options = InvokableActionType.Values.Except(activeTypes).ToList();
+        // Aliases are sent to pairs, and the server and older clients can't read Arousal reactions yet.
+        var options = InvokableActionType.Values.Except(activeTypes).Except([InvokableActionType.Arousal]).ToList();
 
         ImGui.Separator();
 

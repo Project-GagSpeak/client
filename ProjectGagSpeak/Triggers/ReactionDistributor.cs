@@ -33,6 +33,7 @@ public class ReactionDistributor
     private readonly RemoteService _remotes;
     private readonly LociHandler _loci;
     private readonly SelfBondageService _selfBondage;
+    private readonly ArousalService _arousal;
 
     public ReactionDistributor(
         ILogger<ReactionDistributor> logger,
@@ -46,7 +47,8 @@ public class ReactionDistributor
         PatternManager patterns,
         RemoteService remotes,
         LociHandler loci,
-        SelfBondageService selfBondage)
+        SelfBondageService selfBondage,
+        ArousalService arousal)
     {
         _logger = logger;
         _shockies = shockies;
@@ -60,6 +62,7 @@ public class ReactionDistributor
         _remotes = remotes;
         _loci = loci;
         _selfBondage = selfBondage;
+        _arousal = arousal;
     }
 
     #region Invocations
@@ -68,6 +71,7 @@ public class ReactionDistributor
         TextAction ta       => TextReaction(ta, enactor),
         PiShockAction ps    => PiShockReaction(ps, enactor),
         SexToyAction sta    => SexToyReaction(sta, enactor),
+        ArousalAction aa    => ArousalReaction(aa),
         _ => false
     };
 
@@ -80,6 +84,7 @@ public class ReactionDistributor
         LociDataAction lda => await LociReaction(lda, enactor),
         PiShockAction ps => PiShockReaction(ps, enactor),
         SexToyAction sta => SexToyReaction(sta, enactor),
+        ArousalAction aa => ArousalReaction(aa),
         _ => false
     };
 
@@ -468,6 +473,16 @@ public class ReactionDistributor
             return await _loci.RemoveLociItem(act.LociItem, false).ConfigureAwait(false);
 
         return false;
+    }
+
+    private bool ArousalReaction(ArousalAction act)
+    {
+        // Arousal reactions only run while Arousal Effects is enabled.
+        if (ClientData.Globals?.GlobalArousal != true)
+            return false;
+
+        _arousal.AddArousal(act.Amount);
+        return true;
     }
 
     private bool PiShockReaction(PiShockAction act, string? enactor = null)
