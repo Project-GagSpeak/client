@@ -1,4 +1,5 @@
 using CkCommons.Gui;
+using CkCommons.Gui.Utility;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
@@ -156,8 +157,12 @@ public class SettingsModulesHardcore
             DrawArousalToggle(GSLoc.Settings.Options.ArousalBlur, GSLoc.Settings.Options.ArousalBlurTT, false, _ => { }, true);
         }
 
-        DrawArousalToggle(GSLoc.Settings.Options.ArousalStageToasts, GSLoc.Settings.Options.ArousalStageToastsTT,
-            _config.Data.ArousalStageToasts, v => _config.Data.ArousalStageToasts = v, false);
+        if (CkGuiUtils.EnumCombo(GSLoc.Settings.Options.ArousalStageAlerts, 150f, _config.Data.ArousalStageAlerts, out var newAlert))
+        {
+            _config.Data.ArousalStageAlerts = newAlert;
+            _config.Save();
+        }
+        CkGui.HelpTextFramed(GSLoc.Settings.Options.ArousalStageAlertsTT, GsCol.VibrantPink.Vec4(), true);
         DrawArousalToggle(GSLoc.Settings.Options.ArousalDtrLabel, GSLoc.Settings.Options.ArousalDtrTT,
             _config.Data.DtrArousal, v => { _config.Data.DtrArousal = v; _mediator.Publish(new DTRRefreshMessage()); }, false);
 

@@ -1,7 +1,8 @@
+using CkCommons;
 using CkCommons.Gui;
 using Dalamud.Bindings.ImGui;
+using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Interface.Colors;
-using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
@@ -336,21 +337,38 @@ public sealed class ArousalService : IDisposable
 
         var prevStage = ArousalEffects.StageIndex(_lastArousal / AROUSAL_CAP);
         var stage = ArousalEffects.StageIndex(ArousalPercent);
-        // Stage lines describe the effects, so only announce them while Arousal Effects is enabled.
-        if (stage != prevStage && _config.Data.ArousalStageToasts && ClientData.Globals?.GlobalArousal == true)
-        {
-            var msg = stage > prevStage || stage == 0 ? StageLines[stage] : $"You're cooling down... ({ArousalEffects.Stages[stage]})";
-            _mediator.Publish(new NotificationMessage("Arousal", msg, NotificationType.Info));
-        }
+        if (stage != prevStage)
+            AnnounceStage(stage, stage > prevStage);
 
         _mediator.Publish(new ArousalChanged(_lastArousal, Arousal));
         _lastArousal = Arousal;
     }
 
+    /// <summary> Shows the line for a newly entered <paramref name="stage"/> wherever stage alerts are set to go. </summary>
+    private static void AnnounceStage(int stage, bool rising)
+    {
+        var alert = _config.Data.ArousalStageAlerts;
+        if (alert is AlertLocation.Nowhere || ClientData.Globals?.GlobalArousal != true)
+            return;
+
+        var msg = (rising || stage == 0) ? StageLines[stage] : $"You're cooling down... ({ArousalEffects.Stages[stage]})";
+        // Chat and toasts must be shown from the framework thread, and arousal can change off it.
+        Svc.Framework.RunOnFrameworkThread(() =>
+        {
+            if (alert is AlertLocation.Chat or AlertLocation.Both)
+                Svc.Chat.Print(new SeStringBuilder()
+                    .AddUiForeground("[Gagspeak] ", 561).AddUiForegroundOff()
+                    .AddItalics(msg).BuiltString);
+
+            if (alert is AlertLocation.Toast or AlertLocation.Both)
+                Svc.Toasts.ShowNormal(msg);
+        });
+    }
+
     /// <summary> Persists the current arousal at most once a minute. </summary>
     private void SaveArousal()
     {
-        if (_config.Data.Arousal == Arousal || DateTime.UtcNow - _lastSave < TimeSpan.FromMinutes(1))
+        if (Math.Abs(_config.Data.Arousal - Arousal) < 0.0001f || DateTime.UtcNow - _lastSave < TimeSpan.FromMinutes(1))
             return;
 
         _config.Data.Arousal = Arousal;
