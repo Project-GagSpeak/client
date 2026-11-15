@@ -151,6 +151,12 @@ public class PatternHubService : DisposableMediatorSubscriberBase
 
                 Logger.LogDebug("Uploading Pattern to server.", LogFilter.ShareHub);
                 var res = await _hub.UploadPattern(new(patternInfo, base64Pattern)).ConfigureAwait(false);
+                if (res.ErrorCode is GagSpeakApiEc.DuplicateEntry)
+                {
+                    Logger.LogWarning($"Pattern upload rejected as duplicate. Label: {pattern.Label}, Id: {pattern.Identifier}");
+                    Mediator.Publish(new NotificationMessage("Pattern Upload", "A pattern with this name or ID is already on the ShareHub.", NotificationType.Warning));
+                    return;
+                }
                 if (res.ErrorCode is not GagSpeakApiEc.Success)
                     throw new Exception($"Failed to upload pattern to servers. Error: {res.ErrorCode}");
 

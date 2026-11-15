@@ -56,7 +56,8 @@ public class PublicationsManager
     {
         CkGui.FontText("Publish A Pattern", Fonts.SubtitleFont);
 
-        _patternCombo.Draw("##pattern-selector", _selectedPattern.Identifier, 200f);
+        if (_patternCombo.Draw("##pattern-selector", _selectedPattern.Identifier, 200f))
+            _selectedPattern = _patternCombo.Current ?? Pattern.AsEmpty();
 
         ImUtf8.SameLineInner();
         ImGui.AlignTextToFramePadding();
