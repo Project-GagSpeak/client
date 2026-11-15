@@ -8,6 +8,7 @@ using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.Shell;
 using GagSpeak.GameInternals.Agents;
 using GagSpeak.PlayerClient;
+using GagSpeak.Services;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Extensions;
 
@@ -54,8 +55,8 @@ public partial class StaticDetours
                 return;
             }
 
-            // If we are not meant to garble the message, then return original.
-            if (!g.ChatGarblerActive || !gagData.AnyGagActive())
+            // Return original if neither the garbler nor arousal chat effects apply.
+            if (!g.ChatGarblerActive || (!gagData.AnyGagActive() && !ArousalService.HasChatEffects))
             {
                 ProcessChatInputHook.Original(uiModule, message, a3);
                 return;
@@ -118,10 +119,9 @@ public partial class StaticDetours
                 var originalText = string.Join("", textPayloads.Select(tp => tp.Text));
                 // Get the string to garble starting after the prefix text.
                 var stringToProcess = originalText.Substring(prefix.Length);
-                // set the output to the prefix + the garbled message.
-                var output = string.IsNullOrEmpty(prefix)
-                    ? _muffler.GarbleMessage(stringToProcess)
-                    : prefix + " " + _muffler.GarbleMessage(stringToProcess);
+                // set the output to the prefix + the garbled message with arousal effects.
+                var processed = ArousalService.ApplyChatEffects(_muffler.GarbleMessage(stringToProcess));
+                var output = string.IsNullOrEmpty(prefix) ? processed : prefix + " " + processed;
 
                 if (string.IsNullOrWhiteSpace(output))
                 {

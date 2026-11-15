@@ -2,6 +2,27 @@ namespace GagSpeak.Utils;
 
 public static class ArousalEffects
 {
+    // ------------------------ STAGES ------------------------
+
+    /// <summary>
+    ///   Arousal stages, each starting where a new effect kicks in.
+    /// </summary>
+    public static readonly string[] Stages = ["Calm", "Flustered", "Heated", "Aroused", "Desperate"];
+
+    /// <summary>
+    ///   The index into <see cref="Stages"/> for the given arousal percent.
+    /// </summary>
+    public static int StageIndex(float percent) => percent switch
+    {
+        < StutterStart => 0,
+        < BlushStart => 1,
+        < WordCapStart => 2,
+        < PulseStart => 3,
+        _ => 4,
+    };
+
+    public static string StageName(float percent) => Stages[StageIndex(percent)];
+
     // ------------------------ BLUR ------------------------ (WIP, need more vfx experience for this)
 
     /// <summary>

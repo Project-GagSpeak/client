@@ -154,6 +154,7 @@ public class TriggersUI : WindowMediatorSubscriberBase
             case GagTrigger gt: _detections.DrawGag(gt); break;
             case SocialTrigger st: _detections.DrawSocial(st); break;
             case EmoteTrigger et: _detections.DrawEmote(et); break;
+            case ArousalTrigger at: _detections.DrawArousal(at); break;
         }
         
         ImGui.Spacing();
@@ -169,6 +170,7 @@ public class TriggersUI : WindowMediatorSubscriberBase
             case LociDataAction ma: _reactions.DrawLociItem(ma); break;
             case PiShockAction ps: _reactions.DrawShock(ps); break;
             case SexToyAction sta: _reactions.DrawToy(sta); break;
+            case ArousalAction aa: _reactions.DrawArousal(aa); break;
         }
     }
 
@@ -239,6 +241,7 @@ public class TriggersUI : WindowMediatorSubscriberBase
             case GagTrigger gt: _detections.DrawGagEditor(gt); break;
             case SocialTrigger st: _detections.DrawSocialEditor(st); break;
             case EmoteTrigger et: _detections.DrawEmoteEditor(et); break;
+            case ArousalTrigger at: _detections.DrawArousalEditor(at); break;
         }
 
         ImGui.Separator();
@@ -256,6 +259,7 @@ public class TriggersUI : WindowMediatorSubscriberBase
                     InvokableActionType.Restraint => new RestraintAction(),
                     InvokableActionType.LociItem => new LociDataAction(),
                     InvokableActionType.ShockCollar => new PiShockAction(),
+                    InvokableActionType.Arousal => new ArousalAction(),
                     _ => new SexToyAction(),
                 };
             }
@@ -271,6 +275,7 @@ public class TriggersUI : WindowMediatorSubscriberBase
             case LociDataAction ma: _reactions.DrawLociItemEditor(ma); break;
             case PiShockAction ps: _reactions.DrawShockEditor(ps); break;
             case SexToyAction sta: _reactions.DrawToyEditor(sta); break;
+            case ArousalAction aa: _reactions.DrawArousalEditor(aa); break;
         }
     }
 }

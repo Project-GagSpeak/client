@@ -53,6 +53,7 @@ public sealed class TriggerManager : DisposableMediatorSubscriberBase, IHybridSa
             GagTrigger           g  => new GagTrigger(g, false) { Label = newName },
             SocialTrigger        s  => new SocialTrigger(s, false) { Label = newName },
             EmoteTrigger         e  => new EmoteTrigger(e, false) { Label = newName },
+            ArousalTrigger       a  => new ArousalTrigger(a, false) { Label = newName },
             _ => throw new NotImplementedException("Unknown trigger type."),
         };
         Storage.Add(clonedItem);
@@ -80,6 +81,7 @@ public sealed class TriggerManager : DisposableMediatorSubscriberBase, IHybridSa
             TriggerKind.GagState => new GagTrigger(oldTrigger, true),
             TriggerKind.SocialAction => new SocialTrigger(oldTrigger, true),
             TriggerKind.EmoteAction => new EmoteTrigger(oldTrigger, true),
+            TriggerKind.Arousal => new ArousalTrigger(oldTrigger, true),
             _ => throw new NotImplementedException("Unknown trigger type."),
         };
 
@@ -252,6 +254,7 @@ public sealed class TriggerManager : DisposableMediatorSubscriberBase, IHybridSa
                     TriggerKind.GagState => triggerToken.ToObject<GagTrigger>() ?? new GagTrigger(),
                     TriggerKind.SocialAction => triggerToken.ToObject<SocialTrigger>() ?? new SocialTrigger(),
                     TriggerKind.EmoteAction => triggerToken.ToObject<EmoteTrigger>() ?? new EmoteTrigger(),
+                    TriggerKind.Arousal => triggerToken.ToObject<ArousalTrigger>() ?? new ArousalTrigger(),
                     _ => throw new Exception("Invalid Trigger Type")
                 };
                 // Safely parse the integer to InvokableActionType
@@ -266,6 +269,7 @@ public sealed class TriggerManager : DisposableMediatorSubscriberBase, IHybridSa
                         InvokableActionType.LociItem => triggerToken["InvokableAction"]?.ToObject<LociDataAction>() ?? new LociDataAction(),
                         InvokableActionType.ShockCollar => triggerToken["InvokableAction"]?.ToObject<PiShockAction>() ?? new PiShockAction(),
                         InvokableActionType.SexToy => triggerToken["InvokableAction"]?.ToObject<SexToyAction>() ?? new SexToyAction(),
+                        InvokableActionType.Arousal => triggerToken["InvokableAction"]?.ToObject<ArousalAction>() ?? new ArousalAction(),
                         _ => throw new Exception("Invalid InvokableAction Type")
                     };
 

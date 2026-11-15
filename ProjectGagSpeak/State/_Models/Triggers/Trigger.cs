@@ -36,6 +36,7 @@ public abstract class Trigger : IEditableStorageItem<Trigger>
         InvokableAction = other.InvokableAction switch
         {
             SexToyAction sta => new SexToyAction(sta),
+            ArousalAction aa => new ArousalAction(aa),
             PiShockAction ps => new PiShockAction(ps),
             LociDataAction ma => new LociDataAction(ma),
             RestraintAction ra => new RestraintAction(ra),

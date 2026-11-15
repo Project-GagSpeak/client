@@ -142,6 +142,10 @@ public sealed class ClientDataListener : IDisposable
     // All Single Change handles for GlobalPermissions so far are just bools, which makes this easier for us.
     public void HandleGlobalPermChanges(UserData enactor, GlobalPerms? prev, GlobalPerms? current)
     {
+        // The arousal DTR entry only shows while Arousal Effects is enabled.
+        if (prev?.GlobalArousal != current?.GlobalArousal)
+            _mediator.Publish(new DTRRefreshMessage());
+
         var garblerChanged = prev?.ChatGarblerActive != current?.ChatGarblerActive;
         var nameplateChanged = prev?.GaggedNameplate != current?.GaggedNameplate;
         if (!garblerChanged && !nameplateChanged)

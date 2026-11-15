@@ -185,6 +185,15 @@ public class SettingsMainNativeUI
             _mediator.Publish(new DTRRefreshMessage());
         }
         CkGui.HelpTextFramed(GSLoc.Settings.Options.VibeStatusTT, true);
+
+        var arousalDtr = _config.Data.DtrArousal;
+        if (ImGui.Checkbox(GSLoc.Settings.Options.ArousalDtrLabel, ref arousalDtr))
+        {
+            _config.Data.DtrArousal = arousalDtr;
+            _config.Save();
+            _mediator.Publish(new DTRRefreshMessage());
+        }
+        CkGui.HelpTextFramed(GSLoc.Settings.Options.ArousalDtrTT, true);
     }
 
     private void DrawChatIntegrations()

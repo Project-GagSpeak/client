@@ -1059,6 +1059,27 @@ public sealed class ReactionsDrawer
         }
     }
 
+    public void DrawArousal(ArousalAction act)
+    {
+        CkGui.FramedIconText(FAI.Heartbeat);
+        CkGui.TextFrameAlignedInline(act.Amount >= 0 ? "Adds" : "Removes");
+        CkGui.ColorTextFrameAlignedInline($"{Math.Abs(act.Amount)}%", ImGuiColors.TankBlue);
+        CkGui.TextFrameAlignedInline("arousal");
+    }
+
+    public void DrawArousalEditor(ArousalAction act)
+    {
+        CkGui.FramedIconText(FAI.Heartbeat);
+        CkGui.TextFrameAlignedInline("Change arousal by");
+
+        var amount = act.Amount;
+        ImUtf8.SameLineInner();
+        ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
+        if (ImGui.SliderInt("##ArousalAmount", ref amount, -100, 100, "%+d%%"))
+            act.Amount = amount;
+        CkGui.AttachTooltip("Positive values add arousal, negative values remove it.");
+    }
+
     public void DrawShockRow(PiShockAction act)
     {
         CkGui.FramedIconText(FAI.Bolt);

@@ -90,6 +90,7 @@ public class TriggerStorage : List<Trigger>, IEditableStorage<Trigger>
     public IEnumerable<GagTrigger> GagState => this.OfType<GagTrigger>().Where(x => x.Enabled);
     public IEnumerable<SocialTrigger> Social => this.OfType<SocialTrigger>().Where(x => x.Enabled);
     public IEnumerable<EmoteTrigger> Emote => this.OfType<EmoteTrigger>().Where(x => x.Enabled);
+    public IEnumerable<ArousalTrigger> Arousal => this.OfType<ArousalTrigger>().Where(x => x.Enabled);
 
     public Trigger? ReplaceSource(Trigger oldItem, Trigger newItem)
     {

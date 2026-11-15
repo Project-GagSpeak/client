@@ -1,4 +1,5 @@
 using GagSpeak.PlayerClient;
+using GagSpeak.Services;
 using GagSpeak.Services.Controller;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Caches;
@@ -73,6 +74,8 @@ public class OverlayHandler : DisposableMediatorSubscriberBase
     {
         if (!Svc.ClientState.IsLoggedIn)
             return;
+        // Arousal blush draws beneath the blindfold and hypnosis.
+        ArousalService.DrawBlush();
         // Control Blindfold Draw
         _bfService.DrawBlindfoldOverlay();
         // Control Hypnosis Draw (Since it is 'under' the blindfold, but you 'see' it infront of the blindfold)

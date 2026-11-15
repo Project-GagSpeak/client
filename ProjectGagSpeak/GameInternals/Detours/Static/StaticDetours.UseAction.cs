@@ -49,11 +49,11 @@ public unsafe partial class StaticDetours
             var adjustedId = am->GetAdjustedActionId(acId);
             var recastGroup = am->GetRecastGroup((int)type, adjustedId);
 
-            // If the Action has a 2.5s GCD, we apply the scalar to it.
-            if (recastGroup is 58)
+            // If the Action is on the GCD, we apply the scalar to it. (CooldownGroup 58, returned 0-indexed)
+            if (recastGroup is 57)
             {
                 // Multiply the base adjustedRecasttime by the GCD delay factor.
-                var baseRecast = GetAdjustedRecastTime(type, acId);
+                var baseRecast = GetAdjustedRecastTime(type, adjustedId);
                 var expectedRecast = TimeSpan.FromMilliseconds((int)(baseRecast * ArousalService.GcdDelayFactor));
 
                 if (DateTime.Now - _lastUsedActionTime < expectedRecast)
@@ -64,7 +64,11 @@ public unsafe partial class StaticDetours
                 else
                 {
                     // Logger.LogDebug($"ACTION COOLDOWN FINISHED - {acId} | {type} | {expectedRecast}");
-                    _lastUsedActionTime = DateTime.Now; // Update the last used time
+                    // Only restart the window if the game actually used the action.
+                    var used = UseActionHook.Original(am, type, acId, targetId, extraParam, mode, comboRouteId, outOptAreaTargeted);
+                    if (used)
+                        _lastUsedActionTime = DateTime.Now;
+                    return used;
                 }
             }
         }
