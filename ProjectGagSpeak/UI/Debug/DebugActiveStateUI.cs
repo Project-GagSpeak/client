@@ -1,3 +1,4 @@
+using CkCommons;
 using CkCommons.Gui;
 using CkCommons.Textures;
 using Dalamud.Bindings.ImGui;
@@ -5,13 +6,17 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Gui.Components;
 using GagSpeak.Interop;
+using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.PlayerControl;
 using GagSpeak.Services;
+using GagSpeak.Services.Controller;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.State.Caches;
 using GagSpeak.State.Listeners;
+using GagspeakAPI.Attributes;
+using GagspeakAPI.Extensions;
 using GagSpeak.Utils;
 using OtterGui.Text;
 
@@ -33,6 +38,14 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
     private readonly RemoteService _remotes;
     private readonly TextureService _iconTextures;
     private readonly OnTickService _onTick;
+    private readonly ImprisonmentController _imprisonment;
+    private readonly HousingNavmesh _navmesh;
+    private readonly MovementController _movement;
+    private readonly KinksterManager _kinksters;
+    private readonly ClientDataListener _clientListener;
+    private Vector3? _navPoint;
+    private float _leashRange = 5f;
+    private bool _leashForceWalk;
 
     public DebugActiveStateUI(ILogger<DebugActiveStateUI> logger,
         GagspeakMediator mediator,
@@ -49,7 +62,12 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
         HealthMonitor hpMonitor,
         RemoteService remotes,
         TextureService iconTextures,
-        OnTickService onTick)
+        OnTickService onTick,
+        ImprisonmentController imprisonment,
+        HousingNavmesh navmesh,
+        MovementController movement,
+        KinksterManager kinksters,
+        ClientDataListener clientListener)
         : base(logger, mediator, "Active State Debugger")
     {
         _clientData = clientData;
@@ -66,6 +84,11 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
         _remotes = remotes;
         _iconTextures = iconTextures;
         _onTick = onTick;
+        _imprisonment = imprisonment;
+        _navmesh = navmesh;
+        _movement = movement;
+        _kinksters = kinksters;
+        _clientListener = clientListener;
 
         this.SetBoundaries(new Vector2(625, 400), ImGui.GetIO().DisplaySize);
     }
@@ -80,6 +103,11 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
 
         if (ImGui.CollapsingHeader("HcTaskManager State"))
             _hcTasks.DrawCacheState();
+
+#if DEBUG
+        if (ImGui.CollapsingHeader("Pathfinder Test"))
+            DrawPathfinderTest();
+#endif
 
         if (ImGui.CollapsingHeader("Location Service"))
         {
@@ -187,5 +215,89 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
 
         ImGui.Text($"Total Statuses: {LociCache.Data.StatusList.Count()}");
         ImGui.Text($"Total Presets: {LociCache.Data.PresetList.Count()}");
+    }
+
+    private void DrawPathfinderTest()
+    {
+        ImGui.Text($"Navmesh: {(_navmesh.Ready ? "Ready" : "Not Built")}");
+
+        // Walk to a saved point.
+        ImGui.Text(_navPoint is { } point ? $"Nav Point: {point:F2}" : "Nav Point: None");
+        if (CkGui.IconTextButton(FAI.MapMarkerAlt, "Set Nav Point Here", disabled: !PlayerData.Available))
+            _navPoint = PlayerData.Position;
+        ImGui.SameLine();
+        if (CkGui.IconTextButton(FAI.Walking, "Walk To Nav Point", disabled: _navPoint is null || !_navmesh.Ready))
+            _imprisonment.DebugWalkTo(_navPoint!.Value);
+
+        ImGui.Separator();
+        var target = Svc.Targets.Target;
+        ImGui.Text($"Target: {target?.Name.TextValue ?? "None"}");
+
+        // Solo: follow or leash to any target, with no hardcore state behind it.
+        if (_movement.DebugFollow)
+        {
+            if (CkGui.IconTextButton(FAI.Stop, "Stop Following"))
+                _movement.DebugFollow = false;
+        }
+        else if (CkGui.IconTextButton(FAI.Walking, "Follow Target", disabled: target is null || !_navmesh.Ready))
+            _movement.DebugFollow = true;
+
+        ImGui.SameLine();
+        if (_movement.Leashed && Leash.Debug is not null)
+        {
+            if (CkGui.IconTextButton(FAI.Stop, "Stop Leash"))
+                _movement.StopLeash();
+        }
+        else if (CkGui.IconTextButton(FAI.Link, "Leash To Target", disabled: target is null || _movement.Leashed))
+        {
+            var leader = target!;
+            Leash.Debug = new(_leashRange, _leashForceWalk);
+            _movement.StartLeash(Leash.Debug.Value, () => leader.IsValid() ? leader : null);
+        }
+
+        ImGui.SetNextItemWidth(150f);
+        ImGui.SliderFloat("Leash Range##DebugLeash", ref _leashRange, 2f, 20f, "%.1fy");
+        ImGui.SameLine();
+        ImGui.Checkbox("Force Walk##DebugLeash", ref _leashForceWalk);
+
+        // Draws the navmesh onto the game view around us.
+        ImGui.Text("Show:");
+        ImGui.SameLine();
+        ImGui.Checkbox("Colliders##NavDraw", ref _navmesh.DrawCollision);
+        ImGui.SameLine();
+        ImGui.Checkbox("Walkable##NavDraw", ref _navmesh.DrawWalkable);
+        ImGui.SameLine();
+        ImGui.Checkbox("Jumps##NavDraw", ref _navmesh.DrawJumps);
+        ImGui.SameLine();
+        ImGui.Checkbox("Path##NavDraw", ref _navmesh.DrawPath);
+        ImGui.SetNextItemWidth(150f);
+        ImGui.SliderFloat("Draw Radius##NavDraw", ref _navmesh.DrawRadius, 2f, 40f, "%.0fy");
+
+        // With a partner: apply their real Locked Follow or Leash to ourselves locally, with every restriction,
+        // without them pressing anything. Nothing goes to the server.
+        ImGui.Separator();
+        var partner = target is null ? null : _kinksters.DirectPairs.FirstOrDefault(k => k.IsRendered && k.PlayerAddress == target.Address);
+        ImGui.Text($"Partner: {partner?.GetNickAliasOrUid() ?? "Target a visible Kinkster"}");
+        if (ClientData.Hardcore.IsEnabled(HcAttribute.Follow))
+        {
+            if (CkGui.IconTextButton(FAI.Stop, "Stop Locked Follow / Leash"))
+                SetOwnFollow(_kinksters.GetValueOrDefault(new(ClientData.Hardcore!.LockedFollowing.Split('|')[0])), string.Empty);
+        }
+        else
+        {
+            if (CkGui.IconTextButton(FAI.PersonWalkingArrowRight, "Locked Follow Partner", disabled: partner is null))
+                SetOwnFollow(partner, partner!.User.UID);
+            ImGui.SameLine();
+            if (CkGui.IconTextButton(FAI.Link, "Leash To Partner", disabled: partner is null))
+                SetOwnFollow(partner, $"{partner!.User.UID}|{new Leash(_leashRange, _leashForceWalk).ToTag()}");
+        }
+    }
+
+    /// <summary> Debug: changes our own Locked Follow as if <paramref name="partner"/> had, locally only. </summary>
+    private void SetOwnFollow(Kinkster? partner, string followString)
+    {
+        if (partner is null || ClientData.HardcoreClone() is not { } hc)
+            return;
+        _clientListener.ChangeHardcoreStatus(partner.User, HcAttribute.Follow, hc with { LockedFollowing = followString });
     }
 }

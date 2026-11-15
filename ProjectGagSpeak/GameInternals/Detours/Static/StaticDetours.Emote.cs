@@ -1,3 +1,4 @@
+using GagSpeak.PlayerControl;
 using CkCommons;
 using Dalamud.Hooking;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
@@ -67,8 +68,8 @@ public partial class StaticDetours
     {
         Logger.LogTrace("OnExecuteEmote >> Emote [" + EmoteService.EmoteName(emoteId) + "](ID:"+emoteId+") requested to be Executed", LogFilter.EmoteMonitor);
             
-        // Block all emotes if forced to follow
-        if(ClientData.Hardcore.IsEnabled(HcAttribute.Follow))
+        // Block all emotes if forced to follow. A leash leaves them free.
+        if(ClientData.Hardcore.IsEnabled(HcAttribute.Follow) && Leash.Current is null)
             return;
 
         // If we are forced to emote, then we should prevent execution unless NextEmoteAllowed is true.

@@ -1,3 +1,4 @@
+using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Hooking;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using GagSpeak.Services;
@@ -36,6 +37,12 @@ public unsafe partial class StaticDetours
         }
 
         if (_controlCache.BlockActions)
+            return false;
+
+        // Followers may only ride pillion. General actions 9 and 24 are Mount Roulette and Flying Mount Roulette.
+        // Once mounted these only dismount, so allow them.
+        if (_controlCache.BlockMounting && (type is ActionType.Mount || type is ActionType.GeneralAction && acId is 9 or 24)
+            && !Svc.Condition[ConditionFlag.Mounted] && !Svc.Condition[ConditionFlag.RidingPillion])
             return false;
 
         // Return original if not an action we can put arousal delay on.

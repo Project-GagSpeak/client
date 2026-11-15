@@ -87,6 +87,16 @@ public class PlayerCtrlHandler
         if (!_kinksters.TryGetValue(enactor, out var kinkster))
             throw new Exception($"Failed to get Kinkster for UID: {enactor.UID} for Locked Follow!");
 
+        // A leash leaves us free within its range, so none of the /follow startup applies.
+        if (Leash.Current is { } leash)
+        {
+            _logger.LogInformation($"[{kinkster.GetNickAliasOrUid()}] Leashed you to them ({leash.Range}y{(leash.ForceWalk ? ", walking" : string.Empty)})!", LogFilter.HardcoreMovement);
+            _movement.StartLeash(leash, () => kinkster.IsRendered ? Svc.Objects.CreateObjectReference(kinkster.PlayerAddress) : null);
+            _mediator.Publish(new HcStateCacheChanged());
+            GagspeakEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HcAttribute.Follow, true, enactor, MainHub.UID);
+            return;
+        }
+
         _logger.LogInformation($"[{kinkster.GetNickAliasOrUid()}] Enabled your LockedFollowing state!", LogFilter.HardcoreMovement);
         // Cache the movement mode.
         _cachedPlayerMoveMode = GameConfig.UiControl.GetBool("MoveMode") ? MovementMode.Legacy : MovementMode.Standard;
@@ -96,7 +106,8 @@ public class PlayerCtrlHandler
             .Add(new HardcoreTask(() => GameConfig.UiControl.Set("MoveMode", (uint)MovementMode.Legacy)))
             .Add(new HardcoreTask(_movement.RestartTimeoutTracker))
             .Add(new HardcoreTask(() => HcCommonTaskFuncs.TargetNode(() => kinkster.PlayerAddress)))
-            .Add(new HardcoreTask(HcTaskUtils.FollowTarget))
+            // With a navmesh we do the following, so /follow only without one.
+            .Add(new HardcoreTask(() => _movement.UseNavFollow ? true : HcTaskUtils.FollowTarget()))
             .Add(new HardcoreTask(() => _mediator.Publish(new HcStateCacheChanged())))
             .Enqueue();
         GagspeakEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HcAttribute.Follow, true, enactor, MainHub.UID);
@@ -108,6 +119,7 @@ public class PlayerCtrlHandler
 
         // Reset movement mode and timeout trackers, and update the cache.
         _hcTasks.RemoveIfPresent("Locked Follow Startup");
+        _movement.StopLeash();
         _movement.ResetTimeoutTracker();
         if (_cachedPlayerMoveMode != MovementMode.NotSet)
         {

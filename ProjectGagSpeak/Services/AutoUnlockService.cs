@@ -39,6 +39,7 @@ public sealed class AutoUnlockService : BackgroundService
     private readonly ClientData _clientData;
     private readonly ImprisonmentController _cageControl;
     private readonly MovementController _moveControl;
+    private readonly KinksterManager _kinksters;
     private readonly GagRestrictionManager _gags;
     private readonly RestrictionManager _restrictions;
     private readonly RestraintManager _restraints;
@@ -54,6 +55,8 @@ public sealed class AutoUnlockService : BackgroundService
     
     // the interval tasks to check for
     private readonly List<Task> _intervalTasks = [];
+    // When the Locked Follow leader was first seen offline. Waiting a little stops a reconnect's gap ending the follow.
+    private long? _followLeaderOfflineSince;
 
     // local helper values.
     private bool _clientWasDead = false;
@@ -72,6 +75,7 @@ public sealed class AutoUnlockService : BackgroundService
         _clientData = clientData;
         _cageControl = cageControl;
         _moveControl = moveControl;
+        _kinksters = kinksters;
         _gags = gags;
         _restrictions = restrictions;
         _restraints = restraints;
@@ -428,20 +432,25 @@ public sealed class AutoUnlockService : BackgroundService
         if (ClientData.Hardcore is not { } hcState)
             return;
 
-        // forced follow is special in a sense.
-        if (hcState.LockedFollowing.Length > 0 && MovementController.TimeIdleDuringFollow > TimeSpan.FromSeconds(6))
+        // forced follow is special in a sense. It ends when idle, or once the leader has been offline for a while.
+        var following = hcState.LockedFollowing.Length > 0;
+        var leader = hcState.LockedFollowing.Split('|')[0];
+        var leaderOffline = following && _kinksters.GetValueOrDefault(new(leader)) is not { IsOnline: true };
+        _followLeaderOfflineSince = leaderOffline ? _followLeaderOfflineSince ?? Environment.TickCount64 : null;
+        var leaderGone = _followLeaderOfflineSince is { } since && Environment.TickCount64 - since > 5000;
+        if (following && (MovementController.TimeIdleDuringFollow > TimeSpan.FromSeconds(6) || leaderGone))
         {
-            _logger.LogInformation("Standing Still for over 6 seconds during LockedFollow. Auto-Disabling!", LogFilter.AutoUnlocks);
-            var enactor = hcState.LockedFollowing.Split('|')[0];
+            _logger.LogInformation(leaderGone ? "LockedFollow leader went offline. Auto-Disabling!" : "Standing Still for over 6 seconds during LockedFollow. Auto-Disabling!", LogFilter.AutoUnlocks);
+            _followLeaderOfflineSince = null;
             // locally change first.
             _clientData.DisableHardcoreStatus(MainHub.OwnUserData, HcAttribute.Follow);
             _moveControl.ResetTimeoutTracker();
             // then server-side.
-            var success = await _hub.UserHardcoreAttributeExpired(new(HcAttribute.Follow, new(enactor))).ConfigureAwait(false) is not null;
+            var success = await _hub.UserHardcoreAttributeExpired(new(HcAttribute.Follow, new(leader))).ConfigureAwait(false) is not null;
             if (success)
                 _mediator.Publish(new EventMessage(new("Self-Update", MainHub.UID, InteractionType.HardcoreStateChange, $"LockedFollow Timer Expired!")));
             // Perform manipulations regardless. If the achievements fire depends on if it was successful.
-            _hcHandler.DisableLockedFollow(new(enactor), success);
+            _hcHandler.DisableLockedFollow(new(leader), success);
         }
 
         // Check Emote Timer.

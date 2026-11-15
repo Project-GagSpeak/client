@@ -79,6 +79,9 @@ public static class Signatures
 
     public const string RMIWalk = "E8 ?? ?? ?? ?? 80 7B 3E 00 48 8D 3D";
 
+    // Movement input while flying or diving (RMIWalk is only read on the ground).
+    public const string RMIFly = "E8 ?? ?? ?? ?? 0F B6 0D ?? ?? ?? ?? B8";
+
     public const string RMIWalkIsInputEnabled1 = "E8 ?? ?? ?? ?? 84 C0 75 10 38 43 3C";
 
     public const string RMIWalkIsInputEnabled2 = "E8 ?? ?? ?? ?? 84 C0 75 03 88 47 3F";

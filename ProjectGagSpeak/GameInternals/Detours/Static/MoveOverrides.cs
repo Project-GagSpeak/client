@@ -1,4 +1,5 @@
 using CkCommons;
+using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.Config;
 using Dalamud.Hooking;
 using Dalamud.Utility.Signatures;
@@ -9,6 +10,7 @@ using GagSpeak.GameInternals.Addons;
 using GagSpeak.GameInternals.Structs;
 using GagSpeak.PlayerControl;
 using GagSpeak.Services;
+using System.Runtime.InteropServices;
 
 namespace GagSpeak.GameInternals.Detours;
 // made static in StaticDetours for multi-access, but idealy we should place it into movement detours, so they can be manually toggled.
@@ -30,10 +32,21 @@ public unsafe class MoveOverrides : IDisposable
         get => RMIWalkHook.IsEnabled;
         set
         {
-            if (value) RMIWalkHook.Enable();
-            else RMIWalkHook.Disable();
+            if (value)
+            {
+                RMIWalkHook.Enable();
+                RMIFlyHook.Enable();
+            }
+            else
+            {
+                RMIWalkHook.Disable();
+                RMIFlyHook.Disable();
+            }
         }
     }
+
+    /// <summary> Flying or diving, where movement is in 3D and read through <see cref="RMIFlyDetour"/>. </summary>
+    public static bool InAir => Svc.Condition[ConditionFlag.InFlight] || Svc.Condition[ConditionFlag.Diving];
 
     // Where to move to. (can maybe make into a list but prefer not,
     // as it becomes pathing at this point.
@@ -44,11 +57,19 @@ public unsafe class MoveOverrides : IDisposable
     public Vector3 TargetPos;
     public Vector3 PrevPos;
     public float Proximity = 0.01f;
+    // How close FollowPath must pass a waypoint for it to count as reached.
+    private const float WaypointTolerance = 0.25f;
     public bool _legacyMode;
 
     // Progress tracking, so a caller can tell 'walking' apart from 'wedged against a wall'.
     private bool _trackingProgress;
     private long _lastProgressTick;
+    // Progress means moving ProgressDistance from here. Measured against this, not the last frame, so frame rate
+    // doesn't matter.
+    private Vector3 _progressAnchor;
+    private const float ProgressDistance = 0.25f;
+    // A jump link we just reached: jump once facing its landing, while still near where it starts.
+    private (Vector3 Start, long Tick)? _pendingJump;
     // Closest we have come to the target so far, to catch traveling confidently the wrong way.
     private float _closestDistanceXZ;
     private float _currentDistanceXZ;
@@ -70,6 +91,7 @@ public unsafe class MoveOverrides : IDisposable
     {
         Svc.GameConfig.UiControlChanged -= OnConfigChanged;
         RMIWalkHook?.SafeDispose();
+        RMIFlyHook?.SafeDispose();
         CameraOverrideHook?.SafeDispose();
     }
 
@@ -102,6 +124,32 @@ public unsafe class MoveOverrides : IDisposable
         var dir = relDir.h.ToDirection();
         *sumLeft = dir.X;
         *sumForward = dir.Y;
+    }
+
+    // PlayerMoveControllerFlyInput. Only the fields we set are mapped.
+    [StructLayout(LayoutKind.Explicit, Size = 0x18)]
+    private struct FlyInput
+    {
+        [FieldOffset(0x0)] public float Forward;
+        [FieldOffset(0x4)] public float Left;
+        [FieldOffset(0x8)] public float Up;
+    }
+
+    private delegate void RMIFlyDelegate(void* self, FlyInput* result);
+    [Signature(Signatures.RMIFly)]
+    private Hook<RMIFlyDelegate> RMIFlyHook = null!;
+    private void RMIFlyDetour(void* self, FlyInput* result)
+    {
+        RMIFlyHook.Original(self, result);
+
+        // Overwrite regardless of player input, as RMIWalkDetour does, so forced movement can't be escaped.
+        if (DirectionToDestination(true) is not { } relDir)
+            return;
+
+        var dir = relDir.h.ToDirection();
+        result->Forward = dir.Y;
+        result->Left = dir.X;
+        result->Up = relDir.v.Rad;
     }
 
     /// <summary>
@@ -179,14 +227,17 @@ public unsafe class MoveOverrides : IDisposable
         PrevPos = Vector3.Zero;
         _trackingProgress = false;
         _lastProgressTick = 0;
+        _progressAnchor = Vector3.Zero;
         _closestDistanceXZ = 0f;
         _currentDistanceXZ = 0f;
+        _pendingJump = null;
     }
 
     // a version of MoveToNode but for position.
     // returns true when it has reached the point within the specified proximity.
     // recommended to call disable after it returns true.
-    public unsafe bool MoveToPoint(Vector3 point, float proximity = 0.01f)
+    // turnCamera points the camera along the way. Standard movement needs it, so only Legacy can skip it.
+    public unsafe bool MoveToPoint(Vector3 point, float proximity = 0.01f, bool turnCamera = true)
     {
         if (!PlayerData.Available)
         {
@@ -198,9 +249,10 @@ public unsafe class MoveOverrides : IDisposable
         TargetPos = point;
         Proximity = proximity;
 
-        // get where to go
+        // Where to go. Height only counts in the air, where we can move up and down.
         var toNext = point - PlayerData.Position;
-        toNext.Y = 0;
+        if (!InAir)
+            toNext.Y = 0;
 
         // if we are within the cage origin, stop and return complete.
         if (toNext.LengthSquared() <= proximity * proximity)
@@ -208,7 +260,7 @@ public unsafe class MoveOverrides : IDisposable
 
         // otherwise, movement towards the cage origin.
         OverrideMoveInput = true;
-        OverrideCamera = true;
+        OverrideCamera = turnCamera || !_legacyMode;
         SpeedH = SpeedV = 360.Degrees();
         DesiredAzimuth = AzimuthForLook(Angle.FromDirectionXZ(TargetPos - PlayerData.Position));
         DesiredAltitude = -30.Degrees();
@@ -238,8 +290,82 @@ public unsafe class MoveOverrides : IDisposable
     }
 
     /// <summary>
-    ///   Records whether we actually displaced this frame, and jumps to try shaking loose of
-    ///   whatever we are caught on when we did not.
+    ///   Walks the waypoints of <paramref name="path"/> in order, removing each as it is reached. Returns true once
+    ///   the last is within <paramref name="proximity"/>, and null after <paramref name="stallMs"/> without progress.
+    ///   Waypoints <paramref name="isJumpStart"/> marks are jump links, so we jump from them toward the next one.
+    /// </summary>
+    public unsafe bool? FollowPath(List<Vector3> path, float proximity, int stallMs, bool turnCamera = true, Func<Vector3, bool>? isJumpStart = null)
+    {
+        if (!PlayerData.Available)
+            return false;
+
+        // Measured along our movement since last frame, so waypoints are neither skipped nor cut early.
+        var cur = PlayerData.Position;
+        var prev = _trackingProgress ? PrevPos : cur;
+        while (path.Count > 1 && PassedWaypoint(path[0], prev, cur))
+        {
+            if (isJumpStart?.Invoke(path[0]) is true)
+                _pendingJump = (path[0], Environment.TickCount64);
+            path.RemoveAt(0);
+        }
+
+        if (path.Count == 0)
+            return true;
+
+        TryJumpToward(path[0], cur);
+
+        var isLast = path.Count == 1;
+        if (MoveToPoint(path[0], isLast ? proximity : 0f, turnCamera) && isLast)
+        {
+            path.Clear();
+            return true;
+        }
+
+        return stallMs > 0 && StalledFor > stallMs ? null : false;
+    }
+
+    /// <summary> Jumps for the pending jump link once we face <paramref name="landing"/>, or drops it if we moved on. </summary>
+    private void TryJumpToward(Vector3 landing, Vector3 cur)
+    {
+        if (_pendingJump is not { } jump)
+            return;
+
+        // Too late once we're airborne, it's been a second, or we've moved over a yalm past the link's start.
+        if (PlayerData.IsJumping || Environment.TickCount64 - jump.Tick > 1000
+            || Vector2.Distance(new(cur.X, cur.Z), new(jump.Start.X, jump.Start.Z)) > 1f)
+        {
+            _pendingJump = null;
+            return;
+        }
+
+        var facing = (Angle.FromDirectionXZ(landing - cur) - PlayerData.Rotation.Radians()).Normalized();
+        if (Math.Abs(facing.Rad) <= 30.Degrees().Rad && NodeThrottler.Throttle("MoveOverrides.JumpLink", 500))
+        {
+            ChatControlService.SendGeneralActionCommand(2); // Jump
+            Svc.Logger.Verbose($"Jumping a jump link from {jump.Start:F2} toward {landing:F2}.");
+            _pendingJump = null;
+        }
+    }
+
+    /// <summary>
+    ///   If moving from <paramref name="a"/> to <paramref name="b"/> passed within <see cref="WaypointTolerance"/> of
+    ///   <paramref name="waypoint"/> on the XZ plane. Waypoints over a yalm above or below don't count (a landing
+    ///   overhead), unless below us mid-jump.
+    /// </summary>
+    private static bool PassedWaypoint(Vector3 waypoint, Vector3 a, Vector3 b)
+    {
+        if (waypoint.Y - b.Y > 1f || b.Y - waypoint.Y > 1f && !PlayerData.IsJumping)
+            return false;
+
+        var ab = new Vector2(b.X - a.X, b.Z - a.Z);
+        var ap = new Vector2(waypoint.X - a.X, waypoint.Z - a.Z);
+        var t = ab.LengthSquared() > 0 ? Math.Clamp(Vector2.Dot(ap, ab) / ab.LengthSquared(), 0f, 1f) : 0f;
+        return Vector2.Distance(ap, ab * t) <= WaypointTolerance;
+    }
+
+    /// <summary>
+    ///   Records whether we are making progress, and jumps to try shaking loose of whatever we are
+    ///   caught on when we are not.
     /// </summary>
     private unsafe void TrackProgress(float distanceXZ)
     {
@@ -251,6 +377,7 @@ public unsafe class MoveOverrides : IDisposable
         {
             _trackingProgress = true;
             _lastProgressTick = now;
+            _progressAnchor = pos;
             _closestDistanceXZ = distanceXZ;
             PrevPos = pos;
             return;
@@ -259,12 +386,14 @@ public unsafe class MoveOverrides : IDisposable
         if (distanceXZ < _closestDistanceXZ)
             _closestDistanceXZ = distanceXZ;
 
-        var minSpeedAllowed = Control.Instance()->IsWalking ? 0.015f : 0.05f;
-        if (Vector3.Distance(pos, PrevPos) >= minSpeedAllowed)
+        if (Vector3.Distance(pos, _progressAnchor) >= ProgressDistance)
+        {
             _lastProgressTick = now;
-        // Something is potentially obstructing our movement. If we have slowed to a crawl and have
+            _progressAnchor = pos;
+        }
+        // Something is potentially obstructing our movement. If we have been crawling for a while and have
         // not jumped recently, try jumping.
-        else if (AgentMap.Instance()->IsPlayerMoving && HcTaskManager.ElapsedTime > 500 && !PlayerData.IsJumping)
+        else if (AgentMap.Instance()->IsPlayerMoving && now - _lastProgressTick > 500 && !PlayerData.IsJumping)
         {
             if (NodeThrottler.Throttle("HcTaskFunc.Jump", 1250))
             {
