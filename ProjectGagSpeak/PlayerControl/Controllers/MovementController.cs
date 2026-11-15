@@ -29,6 +29,7 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
     private const float LeashReleaseFactor = 0.75f; // pull back to this fraction of the range before letting go.
     private const float ZoneLineOvershoot = 3f; // walk this far past where the leader vanished.
     private const float UsedNearLastSeen = 6f; // vanishing this close to their target means they used it.
+    private const float TakeOffHeight = 3f; // mounted, take off once the leader is this far above us.
 
     private readonly record struct MoveState(bool MustWalk, bool WasWalking);
 
@@ -262,7 +263,7 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
         {
             _nextRepath = now + RepathIntervalMs;
             _followGoal = goal;
-            _followPath = _navmesh.FindPath(PlayerData.Position, goal) ?? [goal];
+            _followPath = MoveOverrides.InAir ? [goal] : _navmesh.FindPath(PlayerData.Position, goal) ?? [goal];
         }
 
         if (_followPath is not null && StaticDetours.MoveOverrides.FollowPath(_followPath, proximity, 0, turnCamera, _navmesh.IsJumpStart) is true)
@@ -323,8 +324,17 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
         if (distance <= (_followPath is null ? _leash.Range : release))
             StopWalking();
         else
+        {
+            if (ShouldTakeOff(leaderPos) && NodeThrottler.Throttle("Leash.TakeOff", 1000))
+                ChatControlService.SendGeneralActionCommand(2); // Jump, which takes off on a flying mount.
             WalkToward(leaderPos, release, false); // keep the player's camera (Legacy movement only).
+        }
     }
+
+    /// <summary> Mounted on the ground below a leader who flew off, where flying is allowed. </summary>
+    private static bool ShouldTakeOff(Vector3 leaderPos)
+        => !MoveOverrides.InAir && Svc.Condition[ConditionFlag.Mounted] && PlayerData.CanFly
+        && leaderPos.Y - PlayerData.Position.Y > TakeOffHeight;
 
     /// <summary> Records the leader's position, heading and interactable target. </summary>
     private void TrackLeader(IGameObject leader)

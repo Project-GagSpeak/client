@@ -1,4 +1,5 @@
 using CkCommons;
+using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.Config;
 using Dalamud.Hooking;
 using Dalamud.Utility.Signatures;
@@ -9,6 +10,7 @@ using GagSpeak.GameInternals.Addons;
 using GagSpeak.GameInternals.Structs;
 using GagSpeak.PlayerControl;
 using GagSpeak.Services;
+using System.Runtime.InteropServices;
 
 namespace GagSpeak.GameInternals.Detours;
 // made static in StaticDetours for multi-access, but idealy we should place it into movement detours, so they can be manually toggled.
@@ -30,10 +32,21 @@ public unsafe class MoveOverrides : IDisposable
         get => RMIWalkHook.IsEnabled;
         set
         {
-            if (value) RMIWalkHook.Enable();
-            else RMIWalkHook.Disable();
+            if (value)
+            {
+                RMIWalkHook.Enable();
+                RMIFlyHook.Enable();
+            }
+            else
+            {
+                RMIWalkHook.Disable();
+                RMIFlyHook.Disable();
+            }
         }
     }
+
+    /// <summary> Flying or diving, where movement is in 3D and read through <see cref="RMIFlyDetour"/>. </summary>
+    public static bool InAir => Svc.Condition[ConditionFlag.InFlight] || Svc.Condition[ConditionFlag.Diving];
 
     // Where to move to. (can maybe make into a list but prefer not,
     // as it becomes pathing at this point.
@@ -78,6 +91,7 @@ public unsafe class MoveOverrides : IDisposable
     {
         Svc.GameConfig.UiControlChanged -= OnConfigChanged;
         RMIWalkHook?.SafeDispose();
+        RMIFlyHook?.SafeDispose();
         CameraOverrideHook?.SafeDispose();
     }
 
@@ -110,6 +124,32 @@ public unsafe class MoveOverrides : IDisposable
         var dir = relDir.h.ToDirection();
         *sumLeft = dir.X;
         *sumForward = dir.Y;
+    }
+
+    // PlayerMoveControllerFlyInput. Only the fields we set are mapped.
+    [StructLayout(LayoutKind.Explicit, Size = 0x18)]
+    private struct FlyInput
+    {
+        [FieldOffset(0x0)] public float Forward;
+        [FieldOffset(0x4)] public float Left;
+        [FieldOffset(0x8)] public float Up;
+    }
+
+    private delegate void RMIFlyDelegate(void* self, FlyInput* result);
+    [Signature(Signatures.RMIFly)]
+    private Hook<RMIFlyDelegate> RMIFlyHook = null!;
+    private void RMIFlyDetour(void* self, FlyInput* result)
+    {
+        RMIFlyHook.Original(self, result);
+
+        // Overwrite regardless of player input, as RMIWalkDetour does, so forced movement can't be escaped.
+        if (DirectionToDestination(true) is not { } relDir)
+            return;
+
+        var dir = relDir.h.ToDirection();
+        result->Forward = dir.Y;
+        result->Left = dir.X;
+        result->Up = relDir.v.Rad;
     }
 
     /// <summary>
@@ -209,9 +249,10 @@ public unsafe class MoveOverrides : IDisposable
         TargetPos = point;
         Proximity = proximity;
 
-        // get where to go
+        // Where to go. Height only counts in the air, where we can move up and down.
         var toNext = point - PlayerData.Position;
-        toNext.Y = 0;
+        if (!InAir)
+            toNext.Y = 0;
 
         // if we are within the cage origin, stop and return complete.
         if (toNext.LengthSquared() <= proximity * proximity)
