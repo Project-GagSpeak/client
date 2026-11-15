@@ -36,6 +36,14 @@ public class MufflerService : DisposableMediatorSubscriberBase
 
     private static GagMuffleType _activeMuffleType = GagMuffleType.None;
 
+    /// <summary>
+    ///   Text emoticons containing letters that should never be garbled.
+    /// </summary>
+    private static readonly HashSet<string> _emoticons = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ":D", ";D", "=D", "D:", ":P", ";P", "=P", ":O", ";O", ":3", ";3", "XD", "XP", ":X", "c:", ":c", "Dx", "o.o", "o_o", "o/", "\\o",
+    };
+
     public MufflerService(ILogger<MufflerService> logger, GagspeakMediator mediator, 
         MainConfig mainConfig, GsEmojiLoader emojis, Ipa_EN_FR_JP_SP_Handler ipaParser,
         GsFiles fileprovider)
@@ -143,6 +151,10 @@ public class MufflerService : DisposableMediatorSubscriberBase
         var skipTranslation = false;
         try
         {
+            // Emotes render anywhere in text, so split them into their own words to keep them ungarbled.
+            if (allowEmotes)
+                inputMessage = Regex.Replace(inputMessage, @":[^:\[\]\s]+:", m => IsEmote(m.Value) ? $" {m.Value} " : m.Value);
+
             // Convert the message to a list of phonetics for each word
             var wordsAndPhonetics = _ipaParser.ToIPAList(inputMessage);
             // Iterate over each word and its phonetics
@@ -166,11 +178,11 @@ public class MufflerService : DisposableMediatorSubscriberBase
                 if (parsed.Word.EndsWith('*'))
                     toggleAfter = true;
 
-                // If we are allowing emotes, we can mark toggle afer as inverse of translation, then set it to skip.
+                // If we are allowing emotes, we can mark toggle after as inverse of translation, then set it to skip.
                 if (allowEmotes && parsed.Word.Length > 2)
                 {
                     // Only validate if a valid emote.
-                    if (parsed.Word.StartsWith(':') && parsed.Word.EndsWith(':') && _emojiLoader.Emotes.ContainsKey(parsed.Word[1..^1]))
+                    if (parsed.Word.StartsWith(':') && parsed.Word.EndsWith(':') && IsEmote(parsed.Word))
                     {
                         toggleAfter = !skipTranslation;
                         skipTranslation = true;
@@ -178,7 +190,7 @@ public class MufflerService : DisposableMediatorSubscriberBase
                 }
 
                 // If we should not skip translation, and any letters are present, attempt the parse
-                if (!skipTranslation && parsed.Word.Any(char.IsLetter))
+                if (!skipTranslation && parsed.Word.Any(char.IsLetter) && !_emoticons.Contains(parsed.Word.TrimEnd('!', '?', '.', ',', '~')))
                 {
                     // do checks for punctuation stuff
                     var isAllCaps = parsed.Word.All(c => !char.IsLetter(c) || char.IsUpper(c));       // Set to true if the full letter is in caps
@@ -220,6 +232,12 @@ public class MufflerService : DisposableMediatorSubscriberBase
 
         return finalMessage.ToString().Trim();
     }
+
+    /// <summary>
+    ///   If a :name: or :s~name: (sticker) token is a loaded emote.
+    /// </summary>
+    private bool IsEmote(string token)
+        => _emojiLoader.Emotes.ContainsKey(token.StartsWith(":s~", StringComparison.OrdinalIgnoreCase) ? token[3..^1] : token[1..^1]);
 
     /// <summary>
     ///   Phonetic IPA -> Garbled sound equivalent in selected language
