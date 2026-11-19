@@ -142,6 +142,14 @@ public class SettingsMainNotifications
             _config.Save();
         }
         CkGui.HelpTextFramed("Where Plugin \"Error\" notifications will display.", true);
+
+        var drNotif = _config.Data.DeathRollNotification;
+        if (ImGui.Checkbox("Deathroll Notifications##notifDeathroll", ref drNotif))
+        {
+            _config.Data.DeathRollNotification = drNotif;
+            _config.Save();
+        }
+        CkGui.HelpTextFramed("Show text notifications when a detected Death Roll was lost.", true);
     }
 
     private bool AlertLocationCombo(string label, AlertLocation cur, out AlertLocation newValue, float width = 150f)

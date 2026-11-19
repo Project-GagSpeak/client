@@ -2,6 +2,7 @@ using CkCommons;
 using Dalamud.Game.Text.SeStringHandling;
 using GagSpeak.Services.Mediator;
 using System.Text.RegularExpressions;
+using GagSpeak.PlayerClient;
 
 namespace GagSpeak.Minigames.Watchers;
 
@@ -14,12 +15,14 @@ public sealed class DeathRollMonitor : DisposableMediatorSubscriberBase
     private static readonly Regex _rollNumbers = new(@"\d+", RegexOptions.Compiled);
 
     private Dictionary<string, DeathRollSession> _monitored = [];
+    private readonly MainConfig _config;
 
-    public DeathRollMonitor(ILogger<DeathRollMonitor> logger, GagspeakMediator mediator)
+    public DeathRollMonitor(ILogger<DeathRollMonitor> logger, GagspeakMediator mediator, MainConfig mainConfig)
         : base(logger, mediator)
     {
         Mediator.Subscribe<DeathrollMessage>(this, _ => OnDeathrollMessage(_.SenderNameWorld, _.Roll, _.RollCap));
         Mediator.Subscribe<DeathrollDiceMessage>(this, _ => OnDeathrollDiceMessage(_.SenderNameWorld, _.Msg));
+        _config = mainConfig;
     }
 
     // add a helper function to retrieve the roll cap of the last active session our player is in.
@@ -142,7 +145,8 @@ public sealed class DeathRollMonitor : DisposableMediatorSubscriberBase
     /// </summary>
     private async void OnSessionComplete(DeathRollSession session)
     {
-        Svc.Chat.Print(new SeStringBuilder().AddText("[Deathroll]").AddUiForeground("Match ended. Loser: " + session.LastRoller, 31).AddUiForegroundOff().BuiltString);
+        if (_config.Data.DeathRollNotification)
+            Svc.Chat.Print(new SeStringBuilder().AddText("[Deathroll]").AddUiForeground("Match ended. Loser: " + session.LastRoller, 31).AddUiForegroundOff().BuiltString);
         // if we were the loser, then fire the deathroll trigger.
         var playerName = PlayerData.NameWithWorld;
         var loser = session.LastRoller;
