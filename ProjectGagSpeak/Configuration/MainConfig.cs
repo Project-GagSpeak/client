@@ -75,6 +75,7 @@ public class MainConfigData : IAudioConfigData
     public AlertLocation InfoNotification { get; set; } = AlertLocation.Both;
     public AlertLocation WarningNotification { get; set; } = AlertLocation.Both;
     public AlertLocation ErrorNotification { get; set; } = AlertLocation.Both;
+    public bool DeathRollNotification { get; set; } = true;
 
     public InptChannel PuppeteerChannelsBitfield { get; set; } = InptChannel.None;
 
@@ -125,6 +126,7 @@ public class MainConfigData : IAudioConfigData
     // NOTIFICATIONS -> ONLINE USERS //
     public OnlineFilter OnlineNotifyFilter { get; set; } = OnlineFilter.Favorited;
     public FilterPolicy OnlineNotifyPolicy { get; set; } = FilterPolicy.MatchAny;
+    
 }
 
 public class MainConfig : IHybridSavable, IAudioConfig<MainConfigData>, IDisposable
